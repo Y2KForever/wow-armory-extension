@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Backend services stack for Game Advice
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 1024
+    Runtime: nodejs20.x
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        NODE_ENV: development
+        OAUTH_BASE_URL: oauth.battle.net
+        REDIRECT_URL: http://localhost
+        CLIENT_CREDENTAILS_SECRET: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/battle.net/client-cpH9hz
+
+Metadata:
+  esbuild: &esbuild
+    BuildMethod: esbuild
+    BuildProperties:
+      Minify: false
+      Target: 'node20'
+      Sourcemap: true
+      Format: esm
+      OutExtension:
+        - .js=.mjs
+      Banner:
+        - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
+
+Resources:
+  WoWExtensionProfiles:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wow-extension-profiles
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  WoWExtensionCdnBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: wow-extension-cdn
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+            AllowedOrigins:
+              - '*'
+            ExposedHeaders:
+              - Set-Cookie
+            MaxAge: 3000
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WoWExtensionCdnBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: 'PolicyForCloudFrontPrivateContent'
+        Statement:
+          - Sid: 'AllowCloudFrontServicePrincipal'
+            Effect: 'Allow'
+            Principal:
+              Service: 'cloudfront.amazonaws.com'
+            Action: 's3:GetObject'
+            Resource: 'arn:aws:s3:::wow-extension-cdn/*'
+            Condition:
+              StringEquals:
+                'aws:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - Id: PublicS3Origin
+            DomainName: wow-extension-cdn.s3.eu-central-1.amazonaws.com
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+          - Id: PrivateS3Origin
+            DomainName: wow-extension-cdn.s3.eu-central-1.amazonaws.com
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+        Enabled: true
+        DefaultCacheBehavior:
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          TargetOriginId: PrivateS3Origin
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: all
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_100
+        Aliases:
+          - cdn.y2kforever.com
+        ViewerCertificate:
+          AcmCertificateArn: arn:aws:acm:us-east-1:571788491196:certificate/0af8b3e4-778a-4da2-a315-d855b1636a9f
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Description: Default for public access
+        Name: cdn-public-access
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+  DnsRecordClient:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: Z00202101M6KXQ38Q3F0V
+      Name: cdn.y2kforever.com
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: !ImportValue HostedZoneId
+
+  API:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: wow-extension
+      StageName: dev
+      Cors:
+        AllowOrigin: "'*'"
+        AllowMethods: "'GET,POST,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Token'"
+
+  LambdaBasicRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service: 'lambda.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'DynamoDBReadPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'dynamodb:GetItem'
+                Resource: !Sub arn:aws:dynamodb:eu-central-1:571788491196:table/wow-extension-profiles
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: arn:aws:logs:*:*:log-group:/aws/lambda/*
+              - Effect: 'Allow'
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                Resource: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/battle.net/client-cpH9hz
+
+  AuthorizeUserFunction:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/Authorize/index.handler
+      Description: Authorize user to connect with battle.net
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetUser:
+          Type: Api
+          Properties:
+            Path: /authorize
+            Method: GET
+            RestApiId:
+              Ref: API
+
+  CallbackFunction:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/Callback/index.handler
+      Description: Callback from battle.net
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetUser:
+          Type: Api
+          Properties:
+            Path: /callback
+            Method: GET
+            RestApiId:
+              Ref: API
