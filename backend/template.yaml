@@ -13,7 +13,7 @@ Globals:
       Variables:
         NODE_ENV: development
         OAUTH_BASE_URL: oauth.battle.net
-        REDIRECT_URL: http://localhost
+        REDIRECT_URI: https://wow.y2kforever.com/callback
         CLIENT_CREDENTAILS_SECRET: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/battle.net/client-cpH9hz
 
 Metadata:
@@ -39,6 +39,20 @@ Resources:
           AttributeType: S
       KeySchema:
         - AttributeName: user_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  WoWExtensionCharacters:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wow-extension-characters
+      AttributeDefinitions:
+        - AttributeName: character_id
+          AttributeType: N
+      KeySchema:
+        - AttributeName: character_id
           KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 1
@@ -76,6 +90,7 @@ Resources:
             Condition:
               StringEquals:
                 'aws:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
+
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -111,6 +126,7 @@ Resources:
           AcmCertificateArn: arn:aws:acm:us-east-1:571788491196:certificate/0af8b3e4-778a-4da2-a315-d855b1636a9f
           MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
+
   CloudFrontOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
@@ -120,6 +136,7 @@ Resources:
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
+
   DnsRecordClient:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -151,14 +168,17 @@ Resources:
               Service: 'lambda.amazonaws.com'
             Action: 'sts:AssumeRole'
       Policies:
-        - PolicyName: 'DynamoDBReadPolicy'
+        - PolicyName: 'WowExtensionLambdaPolicy'
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
                 Action:
                   - 'dynamodb:GetItem'
-                Resource: !Sub arn:aws:dynamodb:eu-central-1:571788491196:table/wow-extension-profiles
+                  - 'dynamodb:UpdateItem'
+                Resource:
+                  - !Sub 'arn:aws:dynamodb:eu-central-1:${AWS::AccountId}:table/wow-extension-profiles'
+                  - !Sub 'arn:aws:dynamodb:eu-central-1:${AWS::AccountId}:table/wow-extension-characters'
               - Effect: 'Allow'
                 Action:
                   - 'logs:CreateLogGroup'
@@ -168,7 +188,7 @@ Resources:
               - Effect: 'Allow'
                 Action:
                   - 'secretsmanager:GetSecretValue'
-                Resource: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/battle.net/client-cpH9hz
+                Resource: !Sub 'arn:aws:secretsmanager:eu-central-1:${AWS::AccountId}:secret:prod/battle.net/client-cpH9hz'
 
   AuthorizeUserFunction:
     Type: AWS::Serverless::Function
