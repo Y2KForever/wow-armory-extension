@@ -1,7 +1,33 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import path, { resolve } from 'path';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import fs from 'fs';
 
-// https://vite.dev/config/
 export default defineConfig({
+  base: '',
   plugins: [react()],
-})
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        config: resolve(__dirname, 'config.html'),
+      },
+    },
+  },
+  server: {
+    middlewareMode: false,
+    fs: {
+      allow: ['.'],
+    },
+    port: 8080,
+    // https: {
+    //   key: fs.readFileSync('./localhost-key.pem'),
+    //   cert: fs.readFileSync('./localhost.pem'),
+    // },
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+});
