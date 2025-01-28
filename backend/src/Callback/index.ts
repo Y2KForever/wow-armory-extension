@@ -7,30 +7,7 @@ import { DynamoDBClient, GetItemCommand, UpdateItemCommand } from '@aws-sdk/clie
 
 const ddbClient = new DynamoDBClient({});
 
-const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
-  const baseUrl = process.env['OAUTH_BASE_URL'];
-  const redirectUri = process.env['REDIRECT_URI'];
-
-  const headers = event.headers;
-  let xUserId = headers['x-user-id'];
-  if (process.env['NODE_ENV'] !== 'development') {
-    if (!xUserId) {
-      return ApiResult(400, JSON.stringify({ error: 'No user id' }));
-    }
-  } else {
-    xUserId = '72606078';
-  }
-
-  const clientCredentialsSecret = await getClientCredentials();
-
-  if (!baseUrl) {
-    return ApiResult(500, JSON.stringify({ error: 'Server error. Try again later' }));
-  }
-
-  if (!redirectUri) {
-    return ApiResult(500, JSON.stringify({ error: 'Server error. Try again later' }));
-  }
-
+export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   const code = event.queryStringParameters?.code;
   const state = event.queryStringParameters?.state;
 
@@ -43,10 +20,29 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     };
   }
 
+  const baseUrl = process.env['OAUTH_BASE_URL'];
+  const redirectUri = process.env['REDIRECT_URI'];
+
+  const userId = event.headers['x-user-id'];
+
+  if (!userId) {
+    return ApiResult(500, JSON.stringify('Something went wrong'));
+  }
+
+  if (!baseUrl) {
+    return ApiResult(500, JSON.stringify({ error: 'Server error. Try again later' }));
+  }
+
+  if (!redirectUri) {
+    return ApiResult(500, JSON.stringify({ error: 'Server error. Try again later' }));
+  }
+
+  const clientCredentialsSecret = await getClientCredentials();
+
   const getCommand = new GetItemCommand({
     TableName: 'wow-extension-profiles',
     Key: {
-      user_id: { S: xUserId },
+      user_id: { S: userId },
     },
   });
 
@@ -85,7 +81,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     const updateItemParams = new UpdateItemCommand({
       TableName: 'wow-extension-profiles',
       Key: {
-        user_id: { S: xUserId },
+        user_id: { S: userId },
       },
       UpdateExpression: `
               SET

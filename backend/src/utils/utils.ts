@@ -1,5 +1,10 @@
-import { APIGatewayProxyEventHeaders } from 'aws-lambda';
+import { APIGatewayProxyEventHeaders, APIGatewayProxyEventV2 } from 'aws-lambda';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+
+import { JWT } from '../types/twitch';
+import { getTwitchExtensionSecret } from './secretsManager';
+import { ApiResultResponse } from '../types/ApiResult';
 
 export const simplifyDynamoDBResponse = (dynamoResponse: any): any => {
   if (!dynamoResponse) {
@@ -59,7 +64,7 @@ export const convertToDynamoDBFormat = (data: any, isNested: boolean = false): a
   }
 };
 
-export const ApiResult = (status: number, body: string) => {
+export const ApiResult = (status: number, body: string): ApiResultResponse => {
   return {
     statusCode: status,
     body: body,
@@ -92,4 +97,43 @@ export const generateRandomState = (length: number = 32): string => {
     throw new Error('State length must be greater than 0');
   }
   return crypto.randomBytes(length).toString('base64url').slice(0, length);
+};
+
+export const controlUser = (user: JWT) => user.user_id === user.channel_id;
+
+export const authorizeUser = async (event: APIGatewayProxyEventV2, requiredHeaders: string[]) => {
+  const controlledHeaders = controlHeaders(event.headers, requiredHeaders);
+
+  if (!controlledHeaders) {
+    return {
+      status: 400,
+      error: 'Not a valid request',
+    };
+  }
+
+  const twitchSecret = Buffer.from((await getTwitchExtensionSecret()).secret, 'base64');
+
+  try {
+    jwt.verify(event.headers['x-token']!, twitchSecret, {
+      algorithms: ['HS256'],
+    });
+  } catch (err) {
+    console.log(`Could not verify token: ${event.headers['x-token']}`);
+    return {
+      status: 500,
+      error: 'Could not verify request',
+    };
+  }
+
+  const decoded = jwt.decode(event.headers['x-token']!) as JWT;
+
+  const controlledUser = controlUser(decoded);
+
+  if (!controlledUser) {
+    console.log('Could not verify user');
+    return {
+      status: 403,
+      error: 'Could not verify user',
+    };
+  }
 };

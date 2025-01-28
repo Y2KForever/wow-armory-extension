@@ -1,9 +1,10 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import { ClientCredentials } from '../types/secretManager';
+import { ClientCredentials, TwitchExtensionSecretType } from '../types/secretManager';
 
 const secretsManagerClient = new SecretsManagerClient();
 
 let clientCredentials;
+let twitchExtensionSecret;
 
 const getClientCredentials = async (): Promise<ClientCredentials> => {
   if (!clientCredentials) {
@@ -20,4 +21,19 @@ const getClientCredentials = async (): Promise<ClientCredentials> => {
   return clientCredentials;
 };
 
-export { getClientCredentials };
+const getTwitchExtensionSecret = async (): Promise<TwitchExtensionSecretType> => {
+  if (!twitchExtensionSecret) {
+    const command = new GetSecretValueCommand({ SecretId: process.env['TWITCH_EXTENSION_SECRET'] });
+    try {
+      const secret = await secretsManagerClient.send(command);
+      const parsedSecret = JSON.parse(secret.SecretString ?? '');
+      twitchExtensionSecret = parsedSecret;
+      return twitchExtensionSecret;
+    } catch (error) {
+      throw new Error(error as string);
+    }
+  }
+  return twitchExtensionSecret;
+};
+
+export { getClientCredentials, getTwitchExtensionSecret };

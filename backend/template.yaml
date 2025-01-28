@@ -15,6 +15,8 @@ Globals:
         OAUTH_BASE_URL: oauth.battle.net
         REDIRECT_URI: https://wow.y2kforever.com/callback
         CLIENT_CREDENTAILS_SECRET: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/battle.net/client-cpH9hz
+        API_BASE_URL: api.blizzard.com
+        TWITCH_EXTENSION_SECRET: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/wow-extension/secret-SvxB3O
 
 Metadata:
   esbuild: &esbuild
@@ -155,7 +157,7 @@ Resources:
       Cors:
         AllowOrigin: "'*'"
         AllowMethods: "'GET,POST,DELETE,OPTIONS'"
-        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Token'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Token,X-User-Id'"
 
   LambdaBasicRole:
     Type: AWS::IAM::Role
@@ -177,8 +179,8 @@ Resources:
                   - 'dynamodb:GetItem'
                   - 'dynamodb:UpdateItem'
                 Resource:
-                  - !Sub 'arn:aws:dynamodb:eu-central-1:${AWS::AccountId}:table/wow-extension-profiles'
-                  - !Sub 'arn:aws:dynamodb:eu-central-1:${AWS::AccountId}:table/wow-extension-characters'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
               - Effect: 'Allow'
                 Action:
                   - 'logs:CreateLogGroup'
@@ -188,7 +190,9 @@ Resources:
               - Effect: 'Allow'
                 Action:
                   - 'secretsmanager:GetSecretValue'
-                Resource: !Sub 'arn:aws:secretsmanager:eu-central-1:${AWS::AccountId}:secret:prod/battle.net/client-cpH9hz'
+                Resource:
+                  - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:prod/battle.net/client-cpH9hz'
+                  - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:prod/wow-extension/secret-SvxB3O'
 
   AuthorizeUserFunction:
     Type: AWS::Serverless::Function
@@ -218,6 +222,38 @@ Resources:
           Type: Api
           Properties:
             Path: /callback
+            Method: GET
+            RestApiId:
+              Ref: API
+
+  GetCharactersFunction:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/GetCharacters/index.handler
+      Description: Get WoW characters for specific user
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetCharacters:
+          Type: Api
+          Properties:
+            Path: /characters
+            Method: GET
+            RestApiId:
+              Ref: API
+
+  GetUserFunction:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/getUser/index.handler
+      Description: Get User info
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetCharacters:
+          Type: Api
+          Properties:
+            Path: /user
             Method: GET
             RestApiId:
               Ref: API
