@@ -1,0 +1,27 @@
+html,
+body {
+  margin: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  display: inherit;
+}
+
+#root-config {
+  display: flex;
+  height: 100%;
+}
+
+#bnet-connect-btn:hover,
+#bnet-connect-btn:focus {
+  box-shadow: inset 0 0 0 2px #47a6ff;
+}
+
+#bnet-connect-btn:active {
+  color: rgba(255, 255, 255, 0.6);
+  background: #003f7a;
+  box-shadow: inset 0 0 0 2px #005aad;
+}
