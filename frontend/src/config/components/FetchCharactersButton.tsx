@@ -14,7 +14,7 @@ export const FetchCharactersButton = ({ onClick, isDisabled, isLoading }: FetchC
       disabled={isDisabled}
       onClick={onClick}
       id="bnet-connect-btn"
-      className="w-[232px] h-[48px] font-bold text-xl rounded-lg bg-blizzard text-white flex items-center flex-row justify-evenly hover:cursor-pointer mt-2"
+      className="w-[232px] h-[48px] font-bold text-xl rounded-lg bg-blizzard text-white flex items-center flex-row justify-evenly hover:cursor-pointer mt-5"
       variant="link"
     >
       {isLoading ? (
