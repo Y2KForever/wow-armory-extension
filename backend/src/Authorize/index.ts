@@ -1,20 +1,30 @@
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { ApiResult, generateRandomState } from '../utils/utils';
+import { ApiResult, authorizeUser, controlHeaders, generateRandomState } from '../utils/utils';
 import { middyCore } from '../utils/middyWrapper';
 import { getClientCredentials } from '../utils/secretsManager';
 
 const ddbClient = new DynamoDBClient({});
 
+const requiredHeaders = ['x-token', 'x-user-id'];
+
 const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
-  const headers = event.headers;
-  let xUserId = headers['x-user-id'];
-  if (process.env['NODE_ENV'] !== 'development') {
-    if (!xUserId) {
-      return ApiResult(400, JSON.stringify({ error: 'No user id' }));
-    }
-  } else {
-    xUserId = '72606078';
+  const region = event.queryStringParameters?.region?.toLowerCase();
+
+  if (!region) {
+    return ApiResult(400, JSON.stringify({ error: 'No region selected' }));
+  }
+
+  const authorizedUser = await authorizeUser(event, requiredHeaders);
+
+  if (authorizedUser !== undefined) {
+    return ApiResult(authorizedUser.status, JSON.stringify(authorizedUser.error));
+  }
+
+  const userId = event.headers['x-user-id'];
+
+  if (!userId) {
+    return ApiResult(500, JSON.stringify({ error: 'Something went wrong' }));
   }
 
   const baseUrl = process.env['OAUTH_BASE_URL'];
@@ -36,7 +46,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     const createParams = new UpdateItemCommand({
       TableName: 'wow-extension-profiles',
       Key: {
-        user_id: { S: xUserId },
+        user_id: { S: userId },
       },
       UpdateExpression: `
           SET
@@ -56,11 +66,11 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
 
     await ddbClient.send(createParams);
   } catch (err) {
-    console.log(`Error trying to create user. UserId: ${xUserId}`);
+    console.log(`Error trying to create user. UserId: ${userId}`);
     throw new Error(err as string);
   }
 
-  const redirectUrl = `https://eu.${baseUrl}/authorize?response_type=code&client_id=${clientCredentialsSecret.client_id}&redirect_uri=${redirectUri}&state=${state}&scope=wow.profile`;
+  const redirectUrl = `https://${region}.${baseUrl}/authorize?response_type=code&client_id=${clientCredentialsSecret.client_id}&redirect_uri=${redirectUri}&state=${state}&scope=wow.profile`;
 
   return {
     statusCode: 302,
