@@ -157,7 +157,7 @@ Resources:
       Cors:
         AllowOrigin: "'*'"
         AllowMethods: "'GET,POST,DELETE,OPTIONS'"
-        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Token,X-User-Id'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Token,X-User-Id,X-Region'"
 
   LambdaBasicRole:
     Type: AWS::IAM::Role
@@ -226,11 +226,11 @@ Resources:
             RestApiId:
               Ref: API
 
-  GetCharactersFunction:
+  PostFetchCharacters:
     Type: AWS::Serverless::Function
     Metadata: *esbuild
     Properties:
-      Handler: src/GetCharacters/index.handler
+      Handler: src/PostFetchCharacters/index.handler
       Description: Get WoW characters for specific user
       Role: !GetAtt LambdaBasicRole.Arn
       Events:
@@ -238,7 +238,7 @@ Resources:
           Type: Api
           Properties:
             Path: /characters
-            Method: GET
+            Method: POST
             RestApiId:
               Ref: API
 
@@ -254,6 +254,21 @@ Resources:
           Type: Api
           Properties:
             Path: /user
+            Method: GET
+            RestApiId:
+              Ref: API
+  PostGenerateSignedUrl:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/PostGenerateSignedUrl/index.handler
+      Description: Generates a signed URL for authorization
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetCharacters:
+          Type: Api
+          Properties:
+            Path: /generate-signed-url
             Method: GET
             RestApiId:
               Ref: API

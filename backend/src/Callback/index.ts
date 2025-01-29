@@ -2,7 +2,7 @@ import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { ApiResult, simplifyDynamoDBResponse } from '../utils/utils';
 import { middyCore } from '../utils/middyWrapper';
 import { getClientCredentials } from '../utils/secretsManager';
-import { TokenResponse } from '../types/battleNet';
+import { TokenResponse } from '../types/BattleNet';
 import { DynamoDBClient, GetItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 
 const ddbClient = new DynamoDBClient({});
@@ -10,24 +10,18 @@ const ddbClient = new DynamoDBClient({});
 export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   const code = event.queryStringParameters?.code;
   const state = event.queryStringParameters?.state;
+  const userId = event.queryStringParameters?.userId;
 
   if (!code || !state) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: 'Something went wrong. Please try again later.',
-      }),
-    };
+    ApiResult(400, JSON.stringify({ error: 'Code or state missing' }));
+  }
+
+  if (!userId) {
+    return ApiResult(400, JSON.stringify({ error: 'UserId missing' }));
   }
 
   const baseUrl = process.env['OAUTH_BASE_URL'];
   const redirectUri = process.env['REDIRECT_URI'];
-
-  const userId = event.headers['x-user-id'];
-
-  if (!userId) {
-    return ApiResult(500, JSON.stringify('Something went wrong'));
-  }
 
   if (!baseUrl) {
     return ApiResult(500, JSON.stringify({ error: 'Server error. Try again later' }));
@@ -67,11 +61,13 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
         'content-type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${b64}`,
       },
-      body: `redirect_uri=${redirectUri}&grant_type=authorization_code&code=${code}`,
+      body: `redirect_uri=${redirectUri}?userId=${userId}&grant_type=authorization_code&code=${code}`,
     });
 
     if (!tokenResponse.ok) {
-      return ApiResult(500, JSON.stringify({ error: 'Something went wrong. Please try again later.' }));
+      const respBody = await tokenResponse.text();
+      console.log(respBody);
+      return ApiResult(500, JSON.stringify({ error: 'Bad token response' }));
     }
 
     const respJSON = (await tokenResponse.json()) as TokenResponse;
@@ -95,7 +91,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
       },
       ExpressionAttributeValues: {
         ':st': { S: respJSON.access_token },
-        ':expires_in': { N: respJSON.expires_in.toString() },
+        ':expires_in': { N: (Math.floor(Date.now() / 1000) + respJSON.expires_in).toString() },
         ':updated_at': { S: now },
         ':created_at': { S: now },
       },

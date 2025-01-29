@@ -4,7 +4,7 @@ import { ApiResult, controlHeaders, simplifyDynamoDBResponse } from '../utils/ut
 import { middyCore } from '../utils/middyWrapper';
 import { getTwitchExtensionSecret } from '../utils/secretsManager';
 import jwt from 'jsonwebtoken';
-import { JWT } from '../types/twitch';
+import { JWT } from '../types/Twitch';
 
 const ddbClient = new DynamoDBClient();
 
@@ -66,6 +66,8 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
       return ApiResult(404, JSON.stringify({ error: 'User does not exist' }));
     }
 
+    const authorized = Math.floor(Date.now() / 1000) < response.expires_in;
+
     return ApiResult(
       200,
       JSON.stringify({
@@ -73,6 +75,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
         createdAt: response.created_at,
         updated_at: response.updated_at,
         region: response.region,
+        authorized: authorized,
       }),
     );
   } catch (err) {
