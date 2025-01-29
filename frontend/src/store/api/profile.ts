@@ -3,6 +3,10 @@ import { setProfile } from '../slices/profile';
 import { RootState } from '../store';
 import { User } from '@/types/User';
 
+interface GenerateSignedUrlProps {
+  region: string;
+}
+
 export const profileApi = createApi({
   reducerPath: 'profileApi',
   refetchOnFocus: true,
@@ -39,7 +43,16 @@ export const profileApi = createApi({
       },
       providesTags: (result, error, userId) => ['profile'],
     }),
+    getGenerateSignedUrl: builder.query({
+      query: ({ region }: GenerateSignedUrlProps) => ({
+        url: 'generate-signed-url',
+        method: 'GET',
+        headers: {
+          'x-region': region,
+        },
+      }),
+    }),
   }),
 });
 
-export const { useGetProfileQuery } = profileApi;
+export const { useGetProfileQuery, useLazyGetGenerateSignedUrlQuery } = profileApi;

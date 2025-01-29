@@ -3,4 +3,5 @@ export type User = {
   createdAt: string;
   updatedAt: string;
   region: string;
+  authorized: boolean
 };

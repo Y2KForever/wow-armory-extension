@@ -1,27 +1,30 @@
 import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { ApiResult, authorizeUser, controlHeaders, generateRandomState } from '../utils/utils';
+import { ApiResult, generateRandomState } from '../utils/utils';
 import { middyCore } from '../utils/middyWrapper';
 import { getClientCredentials } from '../utils/secretsManager';
+import crypto from 'crypto';
 
 const ddbClient = new DynamoDBClient({});
 
-const requiredHeaders = ['x-token', 'x-user-id'];
-
 const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   const region = event.queryStringParameters?.region?.toLowerCase();
+  const userId = event.queryStringParameters?.userId;
+  const exp = event.queryStringParameters?.exp;
+  const sig = event.queryStringParameters?.sig;
+  const token = event.queryStringParameters?.token;
+
+  const data = `${token}|${userId}|${exp}`;
+
+  const expectedSig = crypto.createHmac('sha256', '123').update(data).digest('base64url');
+
+  if (expectedSig !== sig || Math.floor(Date.now() / 1000) >= Number(exp)) {
+    return ApiResult(400, JSON.stringify({ error: 'Not a valid signature' }));
+  }
 
   if (!region) {
     return ApiResult(400, JSON.stringify({ error: 'No region selected' }));
   }
-
-  const authorizedUser = await authorizeUser(event, requiredHeaders);
-
-  if (authorizedUser !== undefined) {
-    return ApiResult(authorizedUser.status, JSON.stringify(authorizedUser.error));
-  }
-
-  const userId = event.headers['x-user-id'];
 
   if (!userId) {
     return ApiResult(500, JSON.stringify({ error: 'Something went wrong' }));
@@ -51,14 +54,17 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
       UpdateExpression: `
           SET
           #st = :st,
+          #rg = :rg,
           updated_at = :updated_at,
           ${'created_at = if_not_exists(created_at, :created_at)'}
      `,
       ExpressionAttributeNames: {
         '#st': 'state',
+        '#rg': 'region',
       },
       ExpressionAttributeValues: {
         ':st': { S: state },
+        ':rg': { S: region },
         ':updated_at': { S: now },
         ':created_at': { S: now },
       },
@@ -70,7 +76,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     throw new Error(err as string);
   }
 
-  const redirectUrl = `https://${region}.${baseUrl}/authorize?response_type=code&client_id=${clientCredentialsSecret.client_id}&redirect_uri=${redirectUri}&state=${state}&scope=wow.profile`;
+  const redirectUrl = `https://${region}.${baseUrl}/authorize?response_type=code&client_id=${clientCredentialsSecret.client_id}&redirect_uri=${redirectUri}?userId=${userId}&state=${state}&scope=wow.profile`;
 
   return {
     statusCode: 302,

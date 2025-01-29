@@ -3,32 +3,41 @@ import { ConfigHeader } from '../components/ConfigHeader';
 import * as bg from '../../assets/bg.jpg';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { TwitchAuthContext } from '../App';
-import { useGetProfileQuery } from '@/store/api/profile';
+import { useGetProfileQuery, useLazyGetGenerateSignedUrlQuery } from '@/store/api/profile';
 import { Spinner } from '@/assets/icons/Spinner';
 import { isFetchBaseQueryError } from '@/lib/utils';
 import { RegionSelect } from '../components/RegionSelect';
 import { Region } from '@/types/Region';
 import { FetchCharactersButton } from '../components/FetchCharactersButton';
-import { useLazyGetCharatersQuery } from '@/store/api/characters';
+import { useLazyPostFetchCharactersQuery } from '@/store/api/characters';
 import { toast } from 'sonner';
 import { CharacterList } from '../components/CharacterList';
 import { useAppSelect } from '@/store/store';
 import { selectSelectedCharacters } from '@/store/selectors/selectCharacters';
 import { ImportButton } from '../components/ImportButton';
+import { NamespaceSelect } from '../components/NamespaceSelect';
+import { Option } from '@/components/ui/multi-select';
 
 export const Config = () => {
   const characters = useAppSelect(selectSelectedCharacters);
   const twitchAuth = useContext(TwitchAuthContext);
   const isAuthLoading = !twitchAuth.authorized || !twitchAuth.channelId;
   const { isLoading: isProfileLoading, error, data } = useGetProfileQuery(undefined, { skip: isAuthLoading });
-  const [getCharacters, { isLoading: isCharactersLoading }] = useLazyGetCharatersQuery();
+  const [getCharacters, { isLoading: isCharactersLoading }] = useLazyPostFetchCharactersQuery();
+  const [getSignedUrl] = useLazyGetGenerateSignedUrlQuery();
   const [region, setRegion] = useState<string | undefined>(undefined);
+  const [namespaces, setNamespaces] = useState<string[]>([]);
+
+  const handleChangeNamespace = (namespaces: Option[]) => {
+    setNamespaces(namespaces.map((namespace) => namespace.value));
+  };
 
   const importCharacters = async () => {
     if (region) {
       try {
         await getCharacters({
-          region: region,
+          region,
+          namespaces,
         }).unwrap();
         toast.success('Success!', {
           description: 'Successfully fetched characters',
@@ -56,12 +65,20 @@ export const Config = () => {
 
   const popupRef = useRef<Window | null>(null);
 
-  const openPopup = () => {
-    const popup = window.open(
-      `https://wow.y2kforever.com/authorize?region=${region?.toLowerCase()}`,
-      '_blank',
-      'width=800,height=600',
-    );
+  const openPopup = async () => {
+    if (!region) {
+      return;
+    }
+
+    const { data, error } = await getSignedUrl({ region: region?.toLowerCase() });
+
+    if (error) {
+      toast.error('Error', {
+        description: 'Failed to create a secure url, please try again later.',
+      });
+    }
+
+    const popup = window.open(data, '_blank', 'width=800,height=600');
 
     if (!popup) {
       console.error('Popup blocked or failed to open');
@@ -111,13 +128,14 @@ export const Config = () => {
               defaultValue={region}
               onValueChange={selectRegion}
             />
-            {!data?.userId ? (
+            {!data?.authorized ? (
               <BNetConnect isDisabled={!region} openAuth={openPopup} />
             ) : (
-              <div>
+              <div className="flex flex-col items-center">
+                <NamespaceSelect onValueChange={handleChangeNamespace} isDisabled={isLoading} />
                 <FetchCharactersButton
                   onClick={importCharacters}
-                  isDisabled={isCharactersLoading}
+                  isDisabled={isCharactersLoading || namespaces.length === 0}
                   isLoading={isCharactersLoading}
                 />
               </div>

@@ -1,3 +1,5 @@
+import { Namespaces } from "./Namspaces";
+
 type WowCharacter = {
   name: string;
   id: number;
@@ -10,6 +12,7 @@ type WowCharacter = {
   gender: Gender;
   faction: Faction;
   level: number;
+  namespace: Namespaces | string;
 };
 
 enum Gender {

@@ -8,11 +8,13 @@ export const columns: ColumnDef<WowCharacter>[] = [
   {
     id: 'select',
     header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
+      <div className="flex">
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      </div>
     ),
     cell: ({ row }) => (
       <Checkbox
@@ -75,22 +77,6 @@ export const columns: ColumnDef<WowCharacter>[] = [
     },
   },
   {
-    accessorKey: 'gender',
-    header: ({ column }) => {
-      const index = column.getSortIndex();
-      return (
-        <Button
-          variant={`${index === 0 ? 'secondary' : 'ghost'}`}
-          className="text-xs"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Gender
-          <Sort className="stroke-current" />
-        </Button>
-      );
-    },
-  },
-  {
     accessorKey: 'class',
     header: ({ column }) => {
       const index = column.getSortIndex();
@@ -123,7 +109,7 @@ export const columns: ColumnDef<WowCharacter>[] = [
     },
   },
   {
-    accessorKey: 'race',
+    accessorKey: 'namespace',
     header: ({ column }) => {
       const index = column.getSortIndex();
       return (
@@ -132,7 +118,7 @@ export const columns: ColumnDef<WowCharacter>[] = [
           className="text-xs"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
-          Race
+          Version
           <Sort className="stroke-current" />
         </Button>
       );

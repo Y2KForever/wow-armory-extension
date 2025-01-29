@@ -2,9 +2,9 @@ import { APIGatewayProxyEventHeaders, APIGatewayProxyEventV2 } from 'aws-lambda'
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
-import { JWT } from '../types/twitch';
+import { JWT } from '../types/Twitch';
 import { getTwitchExtensionSecret } from './secretsManager';
-import { ApiResultResponse } from '../types/ApiResult';
+import { ApiResultResponse } from '../types/Api';
 
 export const simplifyDynamoDBResponse = (dynamoResponse: any): any => {
   if (!dynamoResponse) {

@@ -1,11 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { setCharacters } from '../slices/characters';
 import { RootState } from '../store';
-import { User } from '@/types/User';
 import { WowCharacter } from '@/types/Characters';
 
 type GetCharactersProps = {
   region: string;
+  namespaces: string[];
 };
 
 export const charactersApi = createApi({
@@ -33,12 +33,13 @@ export const charactersApi = createApi({
   }),
   tagTypes: ['characters'],
   endpoints: (builder) => ({
-    getCharaters: builder.query<WowCharacter[], GetCharactersProps>({
-      query: ({ region }) => ({
+    postFetchCharacters: builder.query<WowCharacter[], GetCharactersProps>({
+      query: ({ region, namespaces }) => ({
         url: 'characters',
-        method: 'GET',
-        params: {
+        method: 'POST',
+        body: {
           region,
+          namespaces,
         },
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
@@ -50,4 +51,4 @@ export const charactersApi = createApi({
   }),
 });
 
-export const { useLazyGetCharatersQuery } = charactersApi;
+export const { useLazyPostFetchCharactersQuery } = charactersApi;
