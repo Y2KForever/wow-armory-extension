@@ -76,27 +76,31 @@ export const Config = () => {
       toast.error('Error', {
         description: 'Failed to create a secure url, please try again later.',
       });
+      return;
     }
 
-    const popup = window.open(data, '_blank', 'width=800,height=600');
+    const popup = window.open(data, '_blank', 'width=800,height=600,noopener,noreferrer'); // noopener noreferrer
 
     if (!popup) {
-      console.error('Popup blocked or failed to open');
+      toast.error('Error', {
+        description: 'Failed to open a new window.',
+      });
       return;
     }
 
     popupRef.current = popup;
+  };
 
+  useEffect(() => {
     const interval = setInterval(() => {
-      if (popup.closed) {
-        console.log('Popup closed');
+      if (popupRef.current && popupRef.current.closed) {
         clearInterval(interval);
         popupRef.current = null;
-
-        console.log('Fetching user data...');
       }
     }, 500);
-  };
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (data?.region) {
