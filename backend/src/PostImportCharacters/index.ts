@@ -1,17 +1,25 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { ApiResult, authorizeUser, chunkArray, omit, verifyJwt } from '../utils/utils';
+import { ApiResult, authorizeUser, chunkArray, omit, toUnderscores, verifyJwt } from '../utils/utils';
 import { getTwitchExtensionSecret } from '../utils/secretsManager';
 import { PostImportCharactersBody } from '../types/Api';
 import { DynamoDBClient, TransactWriteItemsCommand, TransactWriteItemsInput } from '@aws-sdk/client-dynamodb';
 
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { middyCore } from '../utils/middyWrapper';
+import BattleNetApi from '../BattleNetApi';
 
 const requiredHeaders = ['x-token', 'x-user-id'];
 
 const ddbClient = new DynamoDBClient();
+const BattleNetApiManager = BattleNetApi.getInstance();
 
 export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
+  const baseUrl = process.env['API_BASE_URL'];
+
+  if (!baseUrl) {
+    return ApiResult(500, JSON.stringify({ error: 'Server error. Please try again later.' }));
+  }
+
   const authorizedUser = await authorizeUser(event, requiredHeaders);
   const twitchSecret = Buffer.from((await getTwitchExtensionSecret()).secret, 'base64');
 
@@ -36,8 +44,21 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
   const chunks = chunkArray(body.characters, 100);
 
   for (const chunk of chunks) {
+    const enrichedCharacter = await Promise.all(
+      chunk.map(async (character) => {
+        try {
+          const mediaData = await BattleNetApiManager.fetchCharacterMedia(character, body.region, baseUrl);
+          const items = await BattleNetApiManager.fetchCharacterItems(character, body.region, baseUrl);
+          return { ...character, ...mediaData, ...items };
+        } catch (err) {
+          console.log(err);
+          return character;
+        }
+      }),
+    );
+
     const params: TransactWriteItemsInput = {
-      TransactItems: chunk.map((character) => ({
+      TransactItems: enrichedCharacter.map((character) => ({
         Put: {
           TableName: 'wow-extension-characters',
           Item: {

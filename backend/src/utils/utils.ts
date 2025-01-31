@@ -146,3 +146,9 @@ export const verifyJwt = (event: APIGatewayProxyEventV2, token: Buffer<ArrayBuff
 export const omit = <T extends Record<string, any>, K extends keyof T>(obj: T, keys: K[]): Omit<T, K> => {
   return Object.fromEntries(Object.entries(obj).filter(([key]) => !keys.includes(key as K))) as Omit<T, K>;
 };
+
+export const toUnderscores = (input: string) => input.toLowerCase().replace(/\s+/g, '_');
+
+export const rgbaToHex = ({ r, g, b }: { r: number; g: number; b: number }) => {
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+};
