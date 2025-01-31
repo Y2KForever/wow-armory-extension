@@ -178,6 +178,7 @@ Resources:
                 Action:
                   - 'dynamodb:GetItem'
                   - 'dynamodb:UpdateItem'
+                  - 'dynamodb:PutItem'
                 Resource:
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
@@ -257,6 +258,7 @@ Resources:
             Method: GET
             RestApiId:
               Ref: API
+
   PostGenerateSignedUrl:
     Type: AWS::Serverless::Function
     Metadata: *esbuild
@@ -270,5 +272,21 @@ Resources:
           Properties:
             Path: /generate-signed-url
             Method: GET
+            RestApiId:
+              Ref: API
+
+  PostImportCharacters:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/PostImportCharacters/index.handler
+      Description: Imports selected characters to ddb.
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetCharacters:
+          Type: Api
+          Properties:
+            Path: /import-characters
+            Method: POST
             RestApiId:
               Ref: API

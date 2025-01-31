@@ -7,7 +7,9 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  RowSelectionState,
   SortingState,
+  Updater,
   useReactTable,
 } from '@tanstack/react-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,10 +19,16 @@ import { Input } from '@/components/ui/input';
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  handleOnRowChange: (valueFn: Updater<RowSelectionState>) => void;
+  rowSelection: {};
 }
 
-export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
-  const [rowSelection, setRowSelection] = useState({});
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  handleOnRowChange,
+  rowSelection,
+}: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const table = useReactTable({
@@ -33,7 +41,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: handleOnRowChange,
     state: {
       sorting,
       columnFilters,

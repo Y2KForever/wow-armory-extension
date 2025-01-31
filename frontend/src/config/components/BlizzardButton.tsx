@@ -1,20 +1,23 @@
 import { Spinner } from '@/assets/icons/Spinner';
 import { Button } from '@/components/ui/button';
+import { ReactElement } from 'react';
 
-interface FetchCharactersButtonProps {
-  onClick: () => void;
+interface BlizzardButtonProps {
+  onClick: () => {};
   isDisabled: boolean;
   isLoading: boolean;
+  children: ReactElement | string;
+  className?: string | undefined;
 }
 
-export const FetchCharactersButton = ({ onClick, isDisabled, isLoading }: FetchCharactersButtonProps) => {
+export const BlizzardButton = ({ onClick, isDisabled, isLoading, children, className }: BlizzardButtonProps) => {
   return (
     <Button
       style={{ textDecoration: 'none' }}
       disabled={isDisabled}
       onClick={onClick}
       id="bnet-connect-btn"
-      className="w-[232px] h-[48px] font-bold text-xl rounded-lg bg-blizzard text-white flex items-center flex-row justify-evenly hover:cursor-pointer mt-5"
+      className={`select-none w-[232px] h-[48px] font-bold text-xl rounded-lg bg-blizzard flex items-center flex-row justify-evenly hover:cursor-pointer ${className}`}
       variant="link"
     >
       {isLoading ? (
@@ -23,7 +26,7 @@ export const FetchCharactersButton = ({ onClick, isDisabled, isLoading }: FetchC
           Processing...
         </>
       ) : (
-        `Fetch Characters`
+        children
       )}
     </Button>
   );

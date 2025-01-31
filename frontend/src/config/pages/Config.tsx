@@ -1,38 +1,66 @@
-import { BNetConnect } from '../components/BnetConnect';
 import { ConfigHeader } from '../components/ConfigHeader';
 import * as bg from '../../assets/bg.jpg';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { TwitchAuthContext } from '../App';
 import { useGetProfileQuery, useLazyGetGenerateSignedUrlQuery } from '@/store/api/profile';
 import { Spinner } from '@/assets/icons/Spinner';
 import { isFetchBaseQueryError } from '@/lib/utils';
 import { RegionSelect } from '../components/RegionSelect';
 import { Region } from '@/types/Region';
-import { FetchCharactersButton } from '../components/FetchCharactersButton';
-import { useLazyPostFetchCharactersQuery } from '@/store/api/characters';
+import { useLazyPostFetchCharactersQuery, useImportCharactersMutation } from '@/store/api/characters';
 import { toast } from 'sonner';
 import { CharacterList } from '../components/CharacterList';
 import { useAppSelect } from '@/store/store';
 import { selectSelectedCharacters } from '@/store/selectors/selectCharacters';
-import { ImportButton } from '../components/ImportButton';
 import { NamespaceSelect } from '../components/NamespaceSelect';
 import { Option } from '@/components/ui/multi-select';
+import { RowSelectionState, Updater } from '@tanstack/react-table';
+import { WowCharacter } from '@/types/Characters';
+import { BlizzardButton } from '../components/BlizzardButton';
+import { BattleNet } from '@/assets/icons/BattleNet';
 
 export const Config = () => {
   const characters = useAppSelect(selectSelectedCharacters);
   const twitchAuth = useContext(TwitchAuthContext);
   const isAuthLoading = !twitchAuth.authorized || !twitchAuth.channelId;
+
   const { isLoading: isProfileLoading, error, data } = useGetProfileQuery(undefined, { skip: isAuthLoading });
   const [getCharacters, { isLoading: isCharactersLoading }] = useLazyPostFetchCharactersQuery();
+  const [importCharacters, { isLoading: isLoadingImport }] = useImportCharactersMutation();
   const [getSignedUrl] = useLazyGetGenerateSignedUrlQuery();
+
   const [region, setRegion] = useState<string | undefined>(undefined);
   const [namespaces, setNamespaces] = useState<string[]>([]);
+  const [rowSelection, setRowSelection] = useState({});
+  const [selectedCharacters, setSelectedCharacters] = useState<WowCharacter[]>([]);
+
+  const handleOnRowSelectionChange = useCallback(
+    (valueFn: Updater<RowSelectionState>) => {
+      if (typeof valueFn === 'function') {
+        const updatedRowSelection = valueFn(rowSelection);
+        setRowSelection(updatedRowSelection);
+
+        const selectedRows = Object.keys(updatedRowSelection).reduce((acc: WowCharacter[], key) => {
+          if (updatedRowSelection[key]) {
+            const index = parseInt(key, 10);
+            const row = characters[index];
+            if (row) {
+              acc.push(row);
+            }
+          }
+          return acc;
+        }, []);
+        setSelectedCharacters(selectedRows);
+      }
+    },
+    [characters, rowSelection],
+  );
 
   const handleChangeNamespace = (namespaces: Option[]) => {
     setNamespaces(namespaces.map((namespace) => namespace.value));
   };
 
-  const importCharacters = async () => {
+  const fetchCharacters = async () => {
     if (region) {
       try {
         await getCharacters({
@@ -53,6 +81,40 @@ export const Config = () => {
     } else {
       toast.error('Error', {
         description: 'Please select a region',
+      });
+    }
+  };
+
+  const importSelectedCharacters = async () => {
+    if (region) {
+      if (selectedCharacters.length > 0) {
+        try {
+          await importCharacters({
+            characters: selectedCharacters,
+            region,
+          }).unwrap();
+          toast.success('Imported characters sucessfully', {
+            description: 'Characters have been imported. You can now start using the extension.',
+          });
+        } catch (err) {
+          if (isFetchBaseQueryError(err)) {
+            toast.error(`Failed to import`, {
+              description: err.data.error,
+            });
+          } else {
+            toast.error(`Failed to import`, {
+              description: 'Something went wrong, try again later.',
+            });
+          }
+        }
+      } else {
+        toast.error('Error', {
+          description: 'Please select characters to import.',
+        });
+      }
+    } else {
+      toast.error('Error', {
+        description: 'Please select a region.',
       });
     }
   };
@@ -133,25 +195,46 @@ export const Config = () => {
               onValueChange={selectRegion}
             />
             {!data?.authorized ? (
-              <BNetConnect isDisabled={!region} openAuth={openPopup} />
+              <BlizzardButton isDisabled={!region} isLoading={false} onClick={openPopup}>
+                <>
+                  <BattleNet className="fill-current" />
+                  Get Started Now
+                </>
+              </BlizzardButton>
             ) : (
-              <div className="flex flex-col items-center">
-                <NamespaceSelect onValueChange={handleChangeNamespace} isDisabled={isLoading} />
-                <FetchCharactersButton
-                  onClick={importCharacters}
-                  isDisabled={isCharactersLoading || namespaces.length === 0}
-                  isLoading={isCharactersLoading}
-                />
-              </div>
+              <>
+                <div className="flex flex-col items-center">
+                  <NamespaceSelect onValueChange={handleChangeNamespace} isDisabled={isLoading} />
+                  <BlizzardButton
+                    isLoading={isCharactersLoading}
+                    onClick={fetchCharacters}
+                    isDisabled={isCharactersLoading || namespaces.length === 0}
+                    className="mt-5"
+                  >
+                    Fetch Character(s)
+                  </BlizzardButton>
+                </div>
+              </>
             )}
           </div>
-          {characters && characters.length > 0 && (
+          {data?.authorized && (characters.length > 0 || selectedCharacters.length > 0) && (
             <>
               <div className="container mx-auto py-10">
-                <CharacterList data={characters} />
+                <CharacterList
+                  data={characters}
+                  rowSelection={rowSelection}
+                  handleOnRowChange={handleOnRowSelectionChange}
+                />
               </div>
               <div className="flex items-end flex-col w-full mb-2">
-                <ImportButton isDisabled={false} openAuth={() => {}} />
+                <BlizzardButton
+                  isLoading={isLoadingImport}
+                  isDisabled={selectedCharacters.length === 0 || isLoadingImport}
+                  onClick={importSelectedCharacters}
+                  className="mr-16"
+                >
+                  Import Character(s)
+                </BlizzardButton>
               </div>
             </>
           )}
