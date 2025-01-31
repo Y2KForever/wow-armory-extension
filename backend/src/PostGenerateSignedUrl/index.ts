@@ -1,6 +1,6 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import crypto from 'crypto';
-import { ApiResult, authorizeUser } from '../utils/utils';
+import { ApiResult, authorizeUser, verifyJwt } from '../utils/utils';
 import { getTwitchExtensionSecret } from '../utils/secretsManager';
 import jwt from 'jsonwebtoken';
 import { middyCore } from '../utils/middyWrapper';
@@ -11,14 +11,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
   const authorizedUser = await authorizeUser(event, requiredHeaders);
   const twitchSecret = Buffer.from((await getTwitchExtensionSecret()).secret, 'base64');
 
-  try {
-    jwt.verify(event.headers['x-token']!, twitchSecret, {
-      algorithms: ['HS256'],
-    });
-  } catch (err) {
-    console.log(`Could not verify token: ${event.headers['x-token']}`);
-    return ApiResult(500, JSON.stringify({ error: 'Could not verify request' }));
-  }
+  verifyJwt(event, twitchSecret);
 
   if (authorizedUser !== undefined) {
     return ApiResult(authorizedUser.status, JSON.stringify(authorizedUser.error));

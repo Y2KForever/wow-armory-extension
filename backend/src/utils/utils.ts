@@ -113,17 +113,7 @@ export const authorizeUser = async (event: APIGatewayProxyEventV2, requiredHeade
 
   const twitchSecret = Buffer.from((await getTwitchExtensionSecret()).secret, 'base64');
 
-  try {
-    jwt.verify(event.headers['x-token']!, twitchSecret, {
-      algorithms: ['HS256'],
-    });
-  } catch (err) {
-    console.log(`Could not verify token: ${event.headers['x-token']}`);
-    return {
-      status: 500,
-      error: 'Could not verify request',
-    };
-  }
+  verifyJwt(event, twitchSecret);
 
   const decoded = jwt.decode(event.headers['x-token']!) as JWT;
 
@@ -136,4 +126,23 @@ export const authorizeUser = async (event: APIGatewayProxyEventV2, requiredHeade
       error: 'Could not verify user',
     };
   }
+};
+
+export const chunkArray = <T>(array: T[], size: number): T[][] => {
+  return Array.from({ length: Math.ceil(array.length / size) }, (_, i) => array.slice(i * size, i * size + size));
+};
+
+export const verifyJwt = (event: APIGatewayProxyEventV2, token: Buffer<ArrayBuffer>) => {
+  try {
+    jwt.verify(event.headers['x-token']!, token, {
+      algorithms: ['HS256'],
+    });
+  } catch (err) {
+    console.log(`Could not verify token: ${event.headers['x-token']}`);
+    return ApiResult(500, JSON.stringify({ error: 'Could not verify request' }));
+  }
+};
+
+export const omit = <T extends Record<string, any>, K extends keyof T>(obj: T, keys: K[]): Omit<T, K> => {
+  return Object.fromEntries(Object.entries(obj).filter(([key]) => !keys.includes(key as K))) as Omit<T, K>;
 };

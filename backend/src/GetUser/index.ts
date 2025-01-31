@@ -1,6 +1,6 @@
 import { DynamoDBClient, GetItemCommand, GetItemCommandInput } from '@aws-sdk/client-dynamodb';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { ApiResult, controlHeaders, simplifyDynamoDBResponse } from '../utils/utils';
+import { ApiResult, controlHeaders, simplifyDynamoDBResponse, verifyJwt } from '../utils/utils';
 import { middyCore } from '../utils/middyWrapper';
 import { getTwitchExtensionSecret } from '../utils/secretsManager';
 import jwt from 'jsonwebtoken';
@@ -19,14 +19,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
 
   const twitchSecret = Buffer.from((await getTwitchExtensionSecret()).secret, 'base64');
 
-  try {
-    jwt.verify(event.headers['x-token']!, twitchSecret, {
-      algorithms: ['HS256'],
-    });
-  } catch (err) {
-    console.log(`Could not verify token: ${event.headers['x-token']}`);
-    return ApiResult(500, JSON.stringify({ error: 'Could not verify request' }));
-  }
+  verifyJwt(event, twitchSecret);
 
   const decoded = jwt.decode(event.headers['x-token']!) as JWT;
 

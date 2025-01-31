@@ -1,5 +1,5 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import { ClientCredentials, TwitchExtensionSecretType } from '../types/secretManager';
+import { ClientCredentials, TwitchExtensionSecretType } from '../types/SecretManager';
 
 const secretsManagerClient = new SecretsManagerClient();
 

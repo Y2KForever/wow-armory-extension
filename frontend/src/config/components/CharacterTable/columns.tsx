@@ -45,7 +45,7 @@ export const columns: ColumnDef<WowCharacter>[] = [
     sortingFn: 'alphanumeric',
   },
   {
-    accessorKey: 'realm',
+    accessorKey: 'realm.name',
     header: ({ column }) => {
       const index = column.getSortIndex();
       return (

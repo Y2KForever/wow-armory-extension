@@ -79,7 +79,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
       account.characters.map((character) => ({
         id: character.id,
         name: character.name,
-        realm: character.realm.name,
+        realm: character.realm,
         class: character.playable_class.name,
         race: character.playable_race.name,
         gender: character.gender.name,

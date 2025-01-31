@@ -8,6 +8,11 @@ type GetCharactersProps = {
   namespaces: string[];
 };
 
+type ImportCharactersProps = {
+  characters: WowCharacter[];
+  region: string;
+};
+
 export const charactersApi = createApi({
   reducerPath: 'charactersApi',
   refetchOnFocus: true,
@@ -48,7 +53,17 @@ export const charactersApi = createApi({
       },
       providesTags: (result, error, userId) => ['characters'],
     }),
+    importCharacters: builder.mutation<void, ImportCharactersProps>({
+      query: ({ characters, region }) => ({
+        url: 'import-characters',
+        method: 'POST',
+        body: {
+          characters,
+          region,
+        },
+      }),
+    }),
   }),
 });
 
-export const { useLazyPostFetchCharactersQuery } = charactersApi;
+export const { useLazyPostFetchCharactersQuery, useImportCharactersMutation } = charactersApi;
