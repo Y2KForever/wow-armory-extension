@@ -131,26 +131,30 @@ export const Config = () => {
     if (!region) {
       return;
     }
+    try {
+      const popup = window.open('', '_blank', 'width=800,height=600,noopener,noreferrer');
 
-    const { data, error } = await getSignedUrl({ region: region?.toLowerCase() });
+      popupRef.current = popup;
+      const { data, error } = await getSignedUrl({ region: region.toLowerCase() });
 
-    if (error) {
-      toast.error('Error', {
-        description: 'Failed to create a secure url, please try again later.',
+      console.log('data', data);
+
+      if (error) {
+        toast.error('Error', {
+          description: 'Failed to create a secure URL, please try again later.',
+        });
+        popup?.close();
+        return;
+      }
+      if (popup) {
+        popup.location.href = data;
+      }
+    } catch (err) {
+      toast.error(`Error`, {
+        description: `Error opening popup: ${err}`,
       });
       return;
     }
-
-    const popup = window.open(data, '_blank', 'width=800,height=600,noopener,noreferrer'); // noopener noreferrer
-
-    if (!popup) {
-      toast.error('Error', {
-        description: 'Failed to open a new window.',
-      });
-      return;
-    }
-
-    popupRef.current = popup;
   };
 
   useEffect(() => {
@@ -195,7 +199,7 @@ export const Config = () => {
               onValueChange={selectRegion}
             />
             {!data?.authorized ? (
-              <BlizzardButton isDisabled={!region} isLoading={false} onClick={openPopup}>
+              <BlizzardButton className="mt-5" isDisabled={!region} isLoading={false} onClick={openPopup}>
                 <>
                   <BattleNet className="fill-current" />
                   Get Started Now
