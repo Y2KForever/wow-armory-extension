@@ -17,6 +17,7 @@ Globals:
         CLIENT_CREDENTAILS_SECRET: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/battle.net/client-cpH9hz
         API_BASE_URL: api.blizzard.com
         TWITCH_EXTENSION_SECRET: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/wow-extension/secret-SvxB3O
+        BUCKET_NAME: wow-extension-cdn
 
 Metadata:
   esbuild: &esbuild
@@ -32,13 +33,13 @@ Metadata:
         - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
 
 Resources:
-  WoWExtensionProfiles:
+  WoWExtensionProfilesTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: wow-extension-profiles
       AttributeDefinitions:
         - AttributeName: user_id
-          AttributeType: S
+          AttributeType: N
       KeySchema:
         - AttributeName: user_id
           KeyType: HASH
@@ -53,12 +54,24 @@ Resources:
       AttributeDefinitions:
         - AttributeName: character_id
           AttributeType: N
+        - AttributeName: user_id
+          AttributeType: N
       KeySchema:
         - AttributeName: character_id
           KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+        - IndexName: user_id-index
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
 
   WoWExtensionCdnBucket:
     Type: AWS::S3::Bucket
@@ -128,6 +141,11 @@ Resources:
           AcmCertificateArn: arn:aws:acm:us-east-1:571788491196:certificate/0af8b3e4-778a-4da2-a315-d855b1636a9f
           MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ErrorCachingMinTTL: 0
 
   CloudFrontOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
@@ -179,9 +197,14 @@ Resources:
                   - 'dynamodb:GetItem'
                   - 'dynamodb:UpdateItem'
                   - 'dynamodb:PutItem'
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 'dynamodb:Query'
                 Resource:
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters/index/user_id-index'
+                  - !Sub 'arn:aws:s3:::wow-extension-cdn/*'
               - Effect: 'Allow'
                 Action:
                   - 'logs:CreateLogGroup'

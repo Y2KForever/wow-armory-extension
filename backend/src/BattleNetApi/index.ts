@@ -1,13 +1,15 @@
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ApiCharacter, ApiItems } from '../types/Api';
 import { ItemResponse, MediaResponse, TokenResponse } from '../types/BattleNet';
 import { getClientCredentials } from '../utils/secretsManager';
-import { rgbaToHex, toUnderscores } from '../utils/utils';
+import { checkIfImageExist, downloadImage, rgbaToHex, toUnderscores, uploadImage } from '../utils/utils';
 
 class BattleNetApi {
   private static instance: BattleNetApi;
   private accessToken: string | null = null;
   private expiryTime: number | null = null;
   private fetchingPromise: Promise<string> | null = null;
+  private static s3Client: S3Client;
 
   private constructor() {}
 
@@ -18,16 +20,36 @@ class BattleNetApi {
     return BattleNetApi.instance;
   }
 
-  private async makeRquest(url: string, method: 'GET' | 'POST' = 'GET', namespace: string): Promise<Response> {
+  public static getS3Client(): S3Client {
+    if (!BattleNetApi.s3Client) {
+      BattleNetApi.s3Client = new S3Client();
+    }
+    return BattleNetApi.s3Client;
+  }
+
+  private async makeRquest(
+    url: string,
+    method: 'GET' | 'POST' = 'GET',
+    locale: boolean,
+    namespace?: string,
+  ): Promise<Response> {
     const token = await this.getAccessToken();
 
-    const response = await fetch(`${url}?locale=en_US`, {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const params = new URLSearchParams(locale ? { locale: 'en_US' } : {});
+    const separator = url.includes('?') ? '&' : '?';
+
+    if (namespace) {
+      headers['Battlenet-Namespace'] = namespace;
+    }
+
+    const response = await fetch(`${url}${separator}${params.toString()}`, {
       method: method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Battlenet-Namespace': namespace,
-      },
+      headers: headers,
     });
 
     if (!response.ok) {
@@ -86,14 +108,25 @@ class BattleNetApi {
       const resp = await this.makeRquest(
         url,
         'GET',
+        true,
         character.namespace === 'retail' ? `profile-${region}` : `${character.namespace}-${region}`,
       );
 
       const data = (await resp.json()) as MediaResponse;
-      return data.assets.reduce((acc, asset) => {
-        acc[asset.key] = asset.value;
-        return acc;
-      }, {} as Record<string, string>);
+      const client = BattleNetApi.getS3Client();
+      const mediaMap: Record<string, string> = {};
+
+      for (const asset of data.assets) {
+        const filename = `${character.id}-${asset.key}.jpg`;
+        const s3Key = `characters/${filename}`;
+        const imageExist = await checkIfImageExist(s3Key, client);
+        if (!imageExist) {
+          const imageBuffer = await downloadImage(asset.value);
+          await uploadImage(s3Key, imageBuffer, client);
+        }
+        mediaMap[asset.key] = filename;
+      }
+      return mediaMap;
     } catch (err) {
       console.log(`Failed to fetch character media:`, err);
       throw err;
@@ -108,15 +141,33 @@ class BattleNetApi {
       const resp = await this.makeRquest(
         url,
         'GET',
+        true,
         character.namespace === 'retail' ? `profile-${region}` : `${character.namespace}-${region}`,
       );
       const data = (await resp.json()) as ItemResponse;
 
-      return data.equipped_items.reduce((acc, item) => {
-        acc[item.slot.type.toLowerCase()] = {
+      const client = BattleNetApi.getS3Client();
+      const items: ApiItems = {};
+
+      for (const item of data.equipped_items) {
+        const slot = item.slot.type.toLowerCase();
+        const filename = `${item.item.id.toString()}.jpg`;
+        const s3Key = `items/${filename}`;
+        const MediaResponse = await this.makeRquest(item.media.key.href, 'GET', false);
+        const media = (await MediaResponse.json()) as MediaResponse;
+        for (const asset of media.assets) {
+          const imageExist = await checkIfImageExist(s3Key, client);
+          if (!imageExist) {
+            const imageBuffer = await downloadImage(asset.value);
+            await uploadImage(s3Key, imageBuffer, client);
+          }
+        }
+        items[slot] = {
+          sockets: item.sockets?.map((socket) => socket.socket_type.type) || [],
           type: item.item_subclass.name,
           quality: item.quality.name,
           name: item.name,
+          image: filename,
           stats:
             item.stats?.map((stat) => ({
               name: stat.type.name,
@@ -124,18 +175,17 @@ class BattleNetApi {
               color: rgbaToHex(stat.display.color),
               is_equipped_bonus: stat.is_equip_bonus ?? false,
             })) || [],
-          spells: item.spells
-            ? item.spells.map((spell) => ({
-                name: spell.spell.name,
-                description: spell.description,
-              }))
-            : null,
+          spells:
+            item.spells?.map((spell) => ({
+              name: spell.spell.name,
+              description: spell.description,
+            })) || null,
           requirement: item.requirements?.level.display_string || null,
           level: item.level.value,
           transmog: item.transmog?.item.name || null,
         };
-        return acc;
-      }, {} as ApiItems);
+      }
+      return items;
     } catch (err) {
       console.log(`Failed to fetch character item:`, err);
       throw err;

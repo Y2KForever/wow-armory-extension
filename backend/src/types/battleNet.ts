@@ -75,9 +75,17 @@ export type ItemResponse = {
 };
 
 type Item = {
+  item: {
+    id: number;
+  };
   item_subclass: { name: string };
   quality: { name: string };
   name: string;
+  media: {
+    key: {
+      href: string;
+    };
+  };
   sockets: {
     socket_type: {
       type: string;
@@ -97,5 +105,5 @@ type Item = {
   requirements?: { level: { display_string: string } };
   level: { value: number };
   transmog?: { item: { name: string } };
-  slot: { type: string };
+  slot: { type: string; name: string };
 };

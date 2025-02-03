@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { JWT } from '../types/Twitch';
 import { getTwitchExtensionSecret } from './secretsManager';
 import { ApiResultResponse } from '../types/Api';
+import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 export const simplifyDynamoDBResponse = (dynamoResponse: any): any => {
   if (!dynamoResponse) {
@@ -151,4 +152,52 @@ export const toUnderscores = (input: string) => input.toLowerCase().replace(/\s+
 
 export const rgbaToHex = ({ r, g, b }: { r: number; g: number; b: number }) => {
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+};
+
+export const checkIfImageExist = async (filename: string, client: S3Client): Promise<boolean> => {
+  if (!process.env['BUCKET_NAME']) {
+    throw new Error(`No bucket name set. Server error`);
+  }
+  try {
+    await client.send(new HeadObjectCommand({ Bucket: process.env['BUCKET_NAME'], Key: filename }));
+    return true;
+  } catch (err) {
+    if (err instanceof Error && 'name' in err) {
+      const httpStatusCode = (err as any)?.$metadata?.httpStatusCode;
+
+      if (httpStatusCode === 403 || httpStatusCode === 404) {
+        return false;
+      }
+    }
+    console.error(`Error checking image existance: ${err}`);
+    throw err;
+  }
+};
+
+export const downloadImage = async (url: string): Promise<Buffer> => {
+  const resp = await fetch(url);
+  if (!resp.ok) {
+    console.log('resp-status', resp.statusText);
+    console.log('resp', await resp.text());
+    throw new Error(`Failed to download image: ${resp.statusText}`);
+  }
+  return Buffer.from(await resp.arrayBuffer());
+};
+
+export const uploadImage = async (filename: string, imageBuffer: Buffer, client: S3Client): Promise<void> => {
+  if (!process.env['BUCKET_NAME']) {
+    throw new Error(`No bucket name set. Server error`);
+  }
+  try {
+    await client.send(
+      new PutObjectCommand({
+        Bucket: process.env['BUCKET_NAME'],
+        Key: filename,
+        Body: imageBuffer,
+        ContentType: 'image/jpeg',
+      }),
+    );
+  } catch (err) {
+    throw err;
+  }
 };

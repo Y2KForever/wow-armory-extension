@@ -36,7 +36,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
   const getCommand = new GetItemCommand({
     TableName: 'wow-extension-profiles',
     Key: {
-      user_id: { S: userId },
+      user_id: { N: userId },
     },
   });
 
@@ -77,7 +77,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     const updateItemParams = new UpdateItemCommand({
       TableName: 'wow-extension-profiles',
       Key: {
-        user_id: { S: userId },
+        user_id: { N: userId },
       },
       UpdateExpression: `
               SET

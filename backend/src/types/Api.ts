@@ -30,6 +30,8 @@ export type ApiCharacter = {
 };
 
 type CharacterItem = {
+  image: string;
+  sockets: string[];
   type: string;
   quality: string;
   name: string;

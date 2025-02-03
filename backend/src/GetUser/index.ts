@@ -1,4 +1,10 @@
-import { DynamoDBClient, GetItemCommand, GetItemCommandInput } from '@aws-sdk/client-dynamodb';
+import {
+  DynamoDBClient,
+  GetItemCommand,
+  GetItemCommandInput,
+  QueryCommand,
+  QueryCommandInput,
+} from '@aws-sdk/client-dynamodb';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { ApiResult, controlHeaders, simplifyDynamoDBResponse, verifyJwt } from '../utils/utils';
 import { middyCore } from '../utils/middyWrapper';
@@ -44,7 +50,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     TableName: 'wow-extension-profiles',
     Key: {
       user_id: {
-        S: userId,
+        N: Number(userId).toString(),
       },
     },
   };
@@ -61,6 +67,24 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
 
     const authorized = Math.floor(Date.now() / 1000) < response.expires_in;
 
+    const characterParams: QueryCommandInput = {
+      TableName: 'wow-extension-characters',
+      KeyConditionExpression: '#userId = :userId',
+      ExpressionAttributeNames: {
+        '#userId': 'user_id',
+      },
+      ExpressionAttributeValues: {
+        ':userId': { N: userId },
+      },
+      IndexName: 'user_id-index',
+    };
+
+    const queryCommand = new QueryCommand(characterParams);
+
+    const { Items } = await ddbClient.send(queryCommand);
+
+    const characterResponse = simplifyDynamoDBResponse(Items);
+
     return ApiResult(
       200,
       JSON.stringify({
@@ -69,6 +93,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
         updated_at: response.updated_at,
         region: response.region,
         authorized: authorized,
+        characters: characterResponse,
       }),
     );
   } catch (err) {

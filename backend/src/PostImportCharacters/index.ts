@@ -65,7 +65,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
             ...marshall(omit(character, ['id'])),
             character_id: { N: character.id.toString() },
             realm: { N: character.realm.id.toString() },
-            user_id: { S: userId },
+            user_id: { N: userId },
             region: { S: body.region },
           },
         },
