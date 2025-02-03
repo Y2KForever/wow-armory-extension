@@ -14,7 +14,7 @@ export type PostImportCharactersBody = {
   region: string;
 };
 
-type ApiCharacter = {
+export type ApiCharacter = {
   id: number;
   name: string;
   realm: {
@@ -29,17 +29,27 @@ type ApiCharacter = {
   namespace: string;
 };
 
-/*
-      account.characters.map((character) => ({
-        id: character.id,
-        name: character.name,
-        realm: character.realm.name,
-        class: character.playable_class.name,
-        race: character.playable_race.name,
-        gender: character.gender.name,
-        faction: character.faction.name,
-        level: character.level,
-        namespace: namespace,
-      })),
+type CharacterItem = {
+  image: string;
+  sockets: string[];
+  type: string;
+  quality: string;
+  name: string;
+  stats: {
+    name: string;
+    value: number;
+    color: string;
+    is_equipped_bonus: boolean;
+  }[];
+  spells:
+    | {
+        name: string;
+        description: string;
+      }[]
+    | null;
+  requirement: string | null;
+  level: number;
+  transmog: string | null;
+};
 
-*/
+export type ApiItems = Record<string, CharacterItem>;

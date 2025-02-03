@@ -47,7 +47,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
   const getUserCommand = new GetItemCommand({
     TableName: 'wow-extension-profiles',
     Key: {
-      user_id: { S: userId },
+      user_id: { N: userId },
     },
   });
 

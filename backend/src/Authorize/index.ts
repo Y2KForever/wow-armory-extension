@@ -49,7 +49,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     const createParams = new UpdateItemCommand({
       TableName: 'wow-extension-profiles',
       Key: {
-        user_id: { S: userId },
+        user_id: { N: userId },
       },
       UpdateExpression: `
           SET
