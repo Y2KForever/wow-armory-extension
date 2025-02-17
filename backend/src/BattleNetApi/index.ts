@@ -111,7 +111,7 @@ class BattleNetApi {
       const s3Key = getS3Key(asset);
       const filename = s3Key.split('/').pop()!;
       const imageExist = await checkIfImageExist(s3Key, client);
-      if (!imageExist) {
+      if (!imageExist || filename.includes('main-raw')) {
         const imageBuffer = await downloadImage(asset.value);
         await uploadImage(s3Key, imageBuffer, client);
       }
@@ -191,7 +191,7 @@ class BattleNetApi {
 
       const mediaMap = await this.processMediaAssets(
         data.assets,
-        (asset) => `characters/${character.id}-${asset.key}.jpg`,
+        (asset) => `characters/${character.id}-${asset.key}.${asset.value.split('.').pop()?.toLowerCase()}`,
         client,
       );
       return mediaMap;
@@ -286,7 +286,7 @@ class BattleNetApi {
         if (item.sockets && item.sockets.length > 0) {
           processedSockets = await Promise.all(
             item.sockets.map(async (socket) => {
-              const socketFilename = `${item.item.id}-${socket.socket_type.type}.jpg`;
+              const socketFilename = `${item.item.id}-${socket.socket_type.type}.png`;
               const socketS3Key = `sockets/${socketFilename}`;
               const socketMediaUrl = socket.media?.key.href;
 

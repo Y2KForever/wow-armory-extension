@@ -37,7 +37,7 @@ export const Character = ({ setView, character }: ICharacterProps) => {
           <div
             style={{
               backgroundSize: '400%',
-              backgroundImage: `url(https://cdn.y2kforever.com/characters/${character.character_id}-main-raw.jpg)`,
+              backgroundImage: `url(https://cdn.y2kforever.com/characters/${character.character_id}-main-raw.png)`,
             }}
             className={`flex flex-row flex-1 w-full h-full bg-center`}
           >
