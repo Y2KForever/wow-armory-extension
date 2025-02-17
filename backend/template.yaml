@@ -14,9 +14,9 @@ Globals:
         NODE_ENV: development
         OAUTH_BASE_URL: oauth.battle.net
         REDIRECT_URI: https://wow.y2kforever.com/callback
-        CLIENT_CREDENTAILS_SECRET: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/battle.net/client-cpH9hz
+        CLIENT_CREDENTAILS_SECRET: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:prod/battle.net/client-cpH9hz
         API_BASE_URL: api.blizzard.com
-        TWITCH_EXTENSION_SECRET: arn:aws:secretsmanager:eu-central-1:571788491196:secret:prod/wow-extension/secret-SvxB3O
+        TWITCH_EXTENSION_SECRET: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:prod/wow-extension/secret-SvxB3O
         BUCKET_NAME: wow-extension-cdn
 
 Metadata:
@@ -109,7 +109,7 @@ Resources:
         Aliases:
           - landing.y2kforever.com
         ViewerCertificate:
-          AcmCertificateArn: arn:aws:acm:us-east-1:571788491196:certificate/0af8b3e4-778a-4da2-a315-d855b1636a9f
+          AcmCertificateArn: !Sub arn:aws:acm:us-east-1:${AWS::AccountId}:certificate/0af8b3e4-778a-4da2-a315-d855b1636a9f
           MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
         CustomErrorResponses:
@@ -233,7 +233,7 @@ Resources:
         Aliases:
           - cdn.y2kforever.com
         ViewerCertificate:
-          AcmCertificateArn: arn:aws:acm:us-east-1:571788491196:certificate/0af8b3e4-778a-4da2-a315-d855b1636a9f
+          AcmCertificateArn: !Sub arn:aws:acm:us-east-1:${AWS::AccountId}:certificate/0af8b3e4-778a-4da2-a315-d855b1636a9f
           MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
         CustomErrorResponses:
