@@ -95,8 +95,8 @@ export const Panel = () => {
 
   if (data && data.characters.length === 0) {
     return (
-      <div className="flex flex-1 justify-center">
-        <p>Character list is empty</p>
+      <div className="flex flex-col items-center w-full mt-2">
+        <p className="text-xs text-white">Streamer has not imported any characters.</p>
       </div>
     );
   }
@@ -105,7 +105,13 @@ export const Panel = () => {
     <ViewContext.Provider value={{ view, setView }}>
       {view.view === 'list' && (
         <SimpleBar style={{ width: '100%', maxHeight: 500 }}>
-          <ListView characters={data?.characters!} />
+          {data?.characters ? (
+            <ListView characters={data.characters} />
+          ) : (
+            <div className="flex flex-col items-center w-full mt-2">
+              <p className="text-xs text-white">Streamer has not imported any characters.</p>
+            </div>
+          )}
         </SimpleBar>
       )}
       {view.view === 'item' && <ItemView />}
