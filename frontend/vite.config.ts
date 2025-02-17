@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         config: resolve(__dirname, 'config.html'),
+        landing: resolve(__dirname, 'landing.html'),
       },
     },
   },

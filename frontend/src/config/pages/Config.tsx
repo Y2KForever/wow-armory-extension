@@ -18,6 +18,8 @@ import { RowSelectionState, Updater } from '@tanstack/react-table';
 import { WowCharacter } from '@/types/Characters';
 import { BlizzardButton } from '../components/BlizzardButton';
 import { BattleNet } from '@/assets/icons/BattleNet';
+import { QuestionMark } from '@/assets/icons/QuestionMark';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export const Config = () => {
   const characters = useAppSelect(selectSelectedCharacters);
@@ -131,30 +133,19 @@ export const Config = () => {
     if (!region) {
       return;
     }
-    try {
-      const popup = window.open('', '_blank', 'width=800,height=600,noopener,noreferrer');
 
-      popupRef.current = popup;
-      const { data, error } = await getSignedUrl({ region: region.toLowerCase() });
+    const { data, error } = await getSignedUrl({ region: region?.toLowerCase() });
 
-      console.log('data', data);
-
-      if (error) {
-        toast.error('Error', {
-          description: 'Failed to create a secure URL, please try again later.',
-        });
-        popup?.close();
-        return;
-      }
-      if (popup) {
-        popup.location.href = data;
-      }
-    } catch (err) {
-      toast.error(`Error`, {
-        description: `Error opening popup: ${err}`,
+    if (error) {
+      toast.error('Error', {
+        description: 'Failed to create a secure url, please try again later.',
       });
       return;
     }
+
+    const popup = window.open(data, '_blank', 'width=800,height=600,noopener,noreferrer');
+
+    popupRef.current = popup;
   };
 
   useEffect(() => {
@@ -192,34 +183,50 @@ export const Config = () => {
       ) : (
         <div className="flex flex-col items-center pt-5 backdrop-brightness-50 w-full h-full overflow-scroll">
           <ConfigHeader />
-          <div id="connect-container">
-            <RegionSelect
-              isDisabled={isCharactersLoading || isLoading}
-              defaultValue={region}
-              onValueChange={selectRegion}
-            />
-            {!data?.authorized ? (
-              <BlizzardButton className="mt-5" isDisabled={!region} isLoading={false} onClick={openPopup}>
+          <div className="flex flex-row">
+            <div id="connect-container">
+              <RegionSelect
+                isDisabled={isCharactersLoading || isLoading}
+                defaultValue={region}
+                onValueChange={selectRegion}
+              />
+              {!data?.authorized ? (
+                <BlizzardButton className="mt-5" isDisabled={!region} isLoading={false} onClick={openPopup}>
+                  <>
+                    <BattleNet className="fill-current" />
+                    Get Started Now
+                  </>
+                </BlizzardButton>
+              ) : (
                 <>
-                  <BattleNet className="fill-current" />
-                  Get Started Now
+                  <div className="flex flex-col items-center">
+                    <div className="mt-5 flex flex-row items-center">
+                      <NamespaceSelect onValueChange={handleChangeNamespace} isDisabled={isLoading} />
+                    </div>
+                    <BlizzardButton
+                      isLoading={isCharactersLoading}
+                      onClick={fetchCharacters}
+                      isDisabled={isCharactersLoading || namespaces.length === 0}
+                      className="mt-5"
+                    >
+                      Fetch Character(s)
+                    </BlizzardButton>
+                  </div>
                 </>
-              </BlizzardButton>
-            ) : (
-              <>
-                <div className="flex flex-col items-center">
-                  <NamespaceSelect onValueChange={handleChangeNamespace} isDisabled={isLoading} />
-                  <BlizzardButton
-                    isLoading={isCharactersLoading}
-                    onClick={fetchCharacters}
-                    isDisabled={isCharactersLoading || namespaces.length === 0}
-                    className="mt-5"
-                  >
-                    Fetch Character(s)
-                  </BlizzardButton>
-                </div>
-              </>
-            )}
+              )}
+            </div>
+            <TooltipProvider delayDuration={0}>
+              {data?.authorized && (
+                <Tooltip>
+                  <div className="fill-current flex items-end mt-20 ml-2 max-h-[24px]">
+                    <TooltipTrigger>
+                      <QuestionMark />
+                    </TooltipTrigger>
+                  </div>
+                  <TooltipContent>Classic is currently disabled, waiting on Blizzard to fix their API</TooltipContent>
+                </Tooltip>
+              )}
+            </TooltipProvider>
           </div>
           {data?.authorized && (characters.length > 0 || selectedCharacters.length > 0) && (
             <>
