@@ -71,8 +71,8 @@ export const ApiResult = (status: number, body: string): ApiResultResponse => {
     body: body,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': '*',
-      'Access-Control-Allow-Methods': '*',
+      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Token,X-User-Id,X-Region',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTION',
     },
   };
 };
