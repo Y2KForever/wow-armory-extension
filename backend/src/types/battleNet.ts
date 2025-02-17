@@ -54,6 +54,7 @@ type WowCharacter = {
     name: string;
   };
   level: number;
+  is_valid: boolean;
 };
 
 type WowAccount = {
@@ -78,6 +79,10 @@ type Item = {
   item: {
     id: number;
   };
+  name_description?: {
+    display_string: string;
+    color: { r: number; g: number; b: number; a: number };
+  };
   item_subclass: { name: string };
   quality: { name: string };
   name: string;
@@ -86,10 +91,38 @@ type Item = {
       href: string;
     };
   };
+  enchantments:
+    | {
+        display_string: string;
+      }[]
+    | null;
+  set?: {
+    name: string;
+    id: number;
+    items: {
+      name: string;
+      is_equipped: boolean;
+    }[];
+    effects: {
+      display_string: string;
+      required_count: number;
+      is_active: boolean;
+    }[];
+    display_string: string;
+  };
   sockets: {
     socket_type: {
       type: string;
       name: string;
+    };
+    item?: {
+      name: string;
+    };
+    display_string: string;
+    media: {
+      key: {
+        href: string;
+      };
     };
   }[];
   stats: {
@@ -102,8 +135,33 @@ type Item = {
     spell: { name: string };
     description: string;
   }[];
-  requirements?: { level: { display_string: string } };
+  requirements?: { level: { display_string: string }; display_string?: string };
   level: { value: number };
   transmog?: { item: { name: string } };
   slot: { type: string; name: string };
+};
+
+export type CharacterSummary = {
+  id: number;
+  name: string;
+  gender: Gender;
+  faction: Faction;
+  active_spec: {
+    name: string;
+  };
+  guild?: {
+    name: string;
+    id: number;
+  };
+  achievement_points: number;
+  last_login_timestamp: number;
+  average_item_level: number;
+  equipped_item_level: number;
+  active_title?: {
+    name: string;
+  };
+};
+
+export type CharacterStatus = {
+  is_valid: boolean;
 };

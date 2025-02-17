@@ -33,6 +33,101 @@ Metadata:
         - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
 
 Resources:
+  LandingPageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: wow-extension-landing-page
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+            AllowedOrigins:
+              - '*'
+            ExposedHeaders:
+              - Set-Cookie
+            MaxAge: 3000
+
+  LandingPagePolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LandingPageBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: 'PolicyForCloudFrontPrivateContent'
+        Statement:
+          - Sid: 'AllowCloudFrontServicePrincipal'
+            Effect: 'Allow'
+            Principal:
+              Service: 'cloudfront.amazonaws.com'
+            Action: 's3:GetObject'
+            Resource: 'arn:aws:s3:::wow-extension-landing-page/*'
+            Condition:
+              StringEquals:
+                'aws:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${LandingPageCloudFrontDistribution}'
+
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: S3OAC
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  LandingPageCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - Id: PublicS3Origin
+            DomainName: wow-extension-landing-page.s3.eu-central-1.amazonaws.com
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+          - Id: PrivateS3Origin
+            DomainName: wow-extension-landing-page.s3.eu-central-1.amazonaws.com
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+        Enabled: true
+        DefaultRootObject: landing.html
+        DefaultCacheBehavior:
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          TargetOriginId: PrivateS3Origin
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: all
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_100
+        Aliases:
+          - landing.y2kforever.com
+        ViewerCertificate:
+          AcmCertificateArn: arn:aws:acm:us-east-1:571788491196:certificate/0af8b3e4-778a-4da2-a315-d855b1636a9f
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ErrorCachingMinTTL: 0
+
+  LandingPageDnsRecordClient:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: Z00202101M6KXQ38Q3F0V
+      Name: landing.y2kforever.com
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LandingPageCloudFrontDistribution.DomainName
+        HostedZoneId: !ImportValue HostedZoneId
+
   WoWExtensionProfilesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -146,16 +241,6 @@ Resources:
             ErrorCachingMinTTL: 0
           - ErrorCode: 404
             ErrorCachingMinTTL: 0
-
-  CloudFrontOriginAccessControl:
-    Type: AWS::CloudFront::OriginAccessControl
-    Properties:
-      OriginAccessControlConfig:
-        Description: Default for public access
-        Name: cdn-public-access
-        OriginAccessControlOriginType: s3
-        SigningBehavior: always
-        SigningProtocol: sigv4
 
   DnsRecordClient:
     Type: AWS::Route53::RecordSet
@@ -313,3 +398,8 @@ Resources:
             Method: POST
             RestApiId:
               Ref: API
+
+Outputs:
+  LandingPageCloudFrontId:
+    Description: 'CloudFront ID for landing page'
+    Value: !GetAtt LandingPageCloudFrontDistribution.Id
