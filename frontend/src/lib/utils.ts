@@ -20,3 +20,9 @@ export const isFetchBaseQueryError = (error: any): error is FetchBaseQueryError 
 };
 
 export const Capitalize = (s: string) => s && String(s[0]).toUpperCase() + String(s).slice(1);
+
+export const toSpaces = (input: string): string => {
+  return input.toLowerCase().replace(/_/g, ' ');
+};
+
+export const removeSpace = (input: string): string => input.toLowerCase().replace(/\s/g, '');

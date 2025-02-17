@@ -1,0 +1,7 @@
+html,
+body,
+#root {
+  width: 318px;
+  min-height: 500px;
+  overflow-x: hidden;
+}

@@ -3,6 +3,12 @@ const plugin = require('tailwindcss/plugin');
 const { fontFamily } = require('tailwindcss/defaultTheme');
 export default {
   darkMode: ['class'],
+  safelist: [
+    { pattern: /text-class-/ },
+    { pattern: /border-rarity-/ },
+    { pattern: /bg-/ },
+    { pattern: /text-rarity-/ },
+  ],
   content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
   theme: {
     extend: {
@@ -13,6 +19,8 @@ export default {
       },
       fontFamily: {
         sans: ['Poppins', 'sans-serif', ...fontFamily.sans],
+        friz: ['Friz Quadrata', 'sans-serif'],
+        semplicita: ['semplicita pro', ...fontFamily.sans],
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -28,9 +36,46 @@ export default {
         },
         blizzard: {
           DEFAULT: '#0074e0',
+          yellow: '#ddac00',
+          brown: '#100d05',
+          gray: '#72716f',
+          emblem: '#4a4d54',
+          lightGray: '#8c8c8c',
+          lightBrown: '#221c13',
+          transmog: '#ff80ff',
+          unselectedGray: '#808080',
+          green: '#00ff00',
+        },
+        rarity: {
+          poor: '#9d9d9d',
+          common: '#ffffff',
+          uncommon: '#1eff00',
+          rare: '#0081ff',
+          epic: '#c600ff',
+          legendary: '#ff8000',
+          artifact: '#e5cc80',
+          heirloom: '#00ccff',
+          azerite: '#e5cc80',
+        },
+        class: {
+          DEFAULT: '#ffffff',
+          deathknight: '#c41e3b',
+          demonhunter: '#a330c9',
+          druid: '#ff7c0a',
+          evoker: '#33937f',
+          hunter: '#aad372',
+          mage: '#68ccef',
+          monk: '#00ffba',
+          paladin: '#f48cba',
+          priest: '#f0ebe0',
+          rouge: '#fff468',
+          shaman: '#2359ff',
+          warlock: '#9382c9',
+          warrior: '#c69b6d',
         },
         backgroundBlizzard: {
           DEFAULT: '#15171e',
+          light: '#222530',
         },
         popover: {
           DEFAULT: 'hsl(var(--popover))',

@@ -65,7 +65,62 @@
   }
 }
 
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 html,
 body {
   margin: 0;
+}
+
+@layer base {
+  @font-face {
+    font-family: 'FrizQuadrata';
+    src: url('assets/fonts/friz-quadrata.ttf') format('ttf'), url('/assets/fonts/friz-quadrata.ttf') format('ttf');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Semplicita Pro';
+    src: url('assets/fonts/SemplicitaPro-Bold.woff2') format('woff2'),
+      url('assets/fonts/SemplicitaPro-Bold.woff') format('woff'),
+      url('assets/fonts/SemplicitaPro-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'Semplicita Pro';
+    src: url('assets/fonts/SemplicitaPro-Semibold.woff2') format('woff2'),
+      url('assets/fonts/SemplicitaPro-Semibold.woff') format('woff'),
+      url('assets/fonts/SemplicitaPro-Semibold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'Semplicita Pro';
+    src: url('assets/fonts/SemplicitaPro-Medium.woff2') format('woff2'),
+      url('assets/fonts/SemplicitaPro-Medium.woff') format('woff'),
+      url('assets/fonts/SemplicitaPro-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'Semplicita Pro';
+    src: url('assets/fonts/SemplicitaPro-Regular.woff2') format('woff2'),
+      url('assets/fonts/SemplicitaPro-Regular.woff') format('woff'),
+      url('assets/fonts/SemplicitaPro-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
 }

@@ -15,6 +15,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -32,6 +33,7 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const table = useReactTable({
+    enableRowSelection: (row) => (row.original as { is_valid: boolean }).is_valid === true,
     enableSorting: true,
     data,
     columns,
@@ -109,21 +111,47 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                  className="data-[state=selected]:bg-muted"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell className="[&:has([role=checkbox])]:pl-4 [&:has([role=checkbox])]" key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) =>
+                row.getCanSelect() ? (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    data-disabled={true}
+                    className="data-[state=selected]:bg-muted"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell className="[&:has([role=checkbox])]:pl-4" key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ) : (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipContent>
+                        Disabled characters cannot be imported. Login to the character and wait an hour, then try again.
+                      </TooltipContent>
+                      <TooltipTrigger asChild>
+                        <TableRow
+                          key={row.id}
+                          data-state={row.getIsSelected() && 'selected'}
+                          data-disabled={false}
+                          className="data-[state=selected]:bg-muted data-[disabled=false]:bg-black data-[disabled=false]:text-blizzard-gray"
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell className="[&:has([role=checkbox])]:pl-4" key={cell.id}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TooltipTrigger>
+                    </Tooltip>
+                  </TooltipProvider>
+                ),
+              )
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
