@@ -150,6 +150,8 @@ export const omit = <T extends Record<string, any>, K extends keyof T>(obj: T, k
 
 export const toUnderscores = (input: string) => input.toLowerCase().replace(/\s+/g, '_');
 
+export const toDashes = (input: string) => input.toLowerCase().replace(/\s+/g, '-');
+
 export const rgbaToHex = ({ r, g, b }: { r: number; g: number; b: number }) => {
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 };

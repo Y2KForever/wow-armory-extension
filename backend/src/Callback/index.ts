@@ -99,10 +99,20 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
 
     await ddbClient.send(updateItemParams);
 
-    return ApiResult(200, JSON.stringify({ status: 'success' }));
+    return {
+      statusCode: 302,
+      headers: {
+        Location: `https://landing.y2kforever.com?state=success`,
+      },
+    };
   } catch (err) {
     console.log(err);
-    throw new Error(err as string);
+    return {
+      statusCode: 302,
+      headers: {
+        Location: `https://landing.y2kforever.com?state=error`,
+      },
+    };
   }
 };
 

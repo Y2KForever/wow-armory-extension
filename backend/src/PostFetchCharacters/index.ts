@@ -2,8 +2,8 @@ import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { ApiResult, authorizeUser, simplifyDynamoDBResponse } from '../utils/utils';
 import { middyCore } from '../utils/middyWrapper';
 import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
-import { CharactersResponse } from '../types/BattleNet';
-import { PostFetchCharacters } from '../types/Api';
+import { ApiCharacter, PostFetchCharacters } from '../types/Api';
+import BattleNetApi from '../BattleNetApi';
 
 const ddbClient = new DynamoDBClient({});
 
@@ -57,26 +57,39 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     return ApiResult(400, JSON.stringify(`Failed to fetch user`));
   }
 
+  const battleNetApiManager = BattleNetApi.getInstance();
+
   const simplifiedResponse = simplifyDynamoDBResponse(Item);
 
-  const promises = jsonBody.namespaces.map(async (namespace) => {
-    const response = await fetch(`https://${jsonBody.region}.${apiBaseUrl}/profile/user/wow?locale=en_US`, {
-      headers: {
-        Authorization: `Bearer ${simplifiedResponse.state}`,
-        'Battlenet-Namespace':
-          namespace === 'retail' ? `profile-${jsonBody.region}` : `profile-${namespace}-${jsonBody.region}`,
-      },
-    });
-    if (!response.ok) {
-      const resp = await response.text();
-      console.log('resp', resp);
-      throw new Error(`Error from Battle.net API for namespace: ${namespace}`);
-    }
+  try {
+    const namespacePromises = jsonBody.namespaces.map(async (namespace) => {
+      const resp = await battleNetApiManager.fetchCharacters(
+        jsonBody.region,
+        apiBaseUrl,
+        namespace,
+        simplifiedResponse.state,
+      );
 
-    const respJSON = (await response.json()) as CharactersResponse;
+      const allCharacters = resp.wow_accounts.flatMap((account) => account.characters);
 
-    return respJSON.wow_accounts.flatMap((account) =>
-      account.characters.map((character) => ({
+      const apiCharacter = allCharacters.map((wowChar) => ({
+        id: wowChar.id,
+        name: wowChar.name,
+        realm: { name: wowChar.realm.name, id: wowChar.realm.id },
+        class: wowChar.playable_class.name,
+        race: wowChar.playable_race.name,
+        gender: wowChar.gender.name,
+        faction: wowChar.faction.name,
+        level: wowChar.level,
+        namespace,
+      }));
+
+      const statusPromises = apiCharacter.map(async (char) =>
+        battleNetApiManager.fetchCharacterStatus(char, jsonBody.region, apiBaseUrl),
+      );
+      const statuses = await Promise.all(statusPromises);
+
+      return allCharacters.map((character, index) => ({
         id: character.id,
         name: character.name,
         realm: character.realm,
@@ -86,15 +99,15 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
         faction: character.faction.name,
         level: character.level,
         namespace: namespace,
-      })),
-    );
-  });
+        is_valid: statuses[index].is_valid,
+      }));
+    });
 
-  try {
-    const res = (await Promise.all(promises)).flat();
-    return ApiResult(200, JSON.stringify(res));
+    const results = await Promise.all(namespacePromises);
+    const flattenedResults = results.flat();
+    return ApiResult(200, JSON.stringify(flattenedResults));
   } catch (err) {
-    console.log(err);
+    console.error('Error processing namespaces:', err);
     return ApiResult(500, JSON.stringify({ error: 'Something went wrong' }));
   }
 };

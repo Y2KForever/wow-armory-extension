@@ -47,9 +47,14 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     const enrichedCharacter = await Promise.all(
       chunk.map(async (character) => {
         try {
+          const isValid = await BattleNetApiManager.fetchCharacterStatus(character, body.region, baseUrl);
+          if (!isValid) {
+            return { ...character, ...{ is_valid: false } };
+          }
           const mediaData = await BattleNetApiManager.fetchCharacterMedia(character, body.region, baseUrl);
           const items = await BattleNetApiManager.fetchCharacterItems(character, body.region, baseUrl);
-          return { ...character, ...mediaData, ...items };
+          const summary = await BattleNetApiManager.fetchCharacterSummary(character, body.region, baseUrl);
+          return { ...character, ...mediaData, ...items, ...summary, ...isValid };
         } catch (err) {
           console.log(err);
           return character;
@@ -62,9 +67,10 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
         Put: {
           TableName: 'wow-extension-characters',
           Item: {
-            ...marshall(omit(character, ['id'])),
+            ...marshall(omit(character, ['id']), { removeUndefinedValues: true }),
             character_id: { N: character.id.toString() },
             realm: { N: character.realm.id.toString() },
+            realm_name: { S: character.realm.name.toLowerCase() },
             user_id: { N: userId },
             region: { S: body.region },
           },
