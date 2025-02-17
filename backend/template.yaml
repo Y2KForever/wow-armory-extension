@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: Backend services stack for Game Advice
+Description: Backend services stack for WoW Extension
 
 Globals:
   Function:
@@ -398,6 +398,110 @@ Resources:
             Method: POST
             RestApiId:
               Ref: API
+
+  UpdatesCharactersScheduleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - scheduler.amazonaws.com
+
+  UpdateCharactersPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: UpdatesCharactersSchedulePolicy
+      Roles:
+        - !Ref UpdatesCharactersScheduleRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 'lambda:InvokeFunction'
+            Effect: Allow
+            Resource: !GetAtt UpdateCharactersSchedule.Arn
+
+  UpdateCharactersLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: UpdateCharactersLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - 'dynamodb:Scan'
+                  - 'dynamodb:Query'
+                  - 'dynamodb:Delete'
+                  - 'dynamodb:UpdateItem'
+                  - 'dynamodb:PutItem'
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                Effect: Allow
+                Resource:
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters/index/user_id-index'
+                  - !Sub 'arn:aws:s3:::wow-extension-cdn/*'
+              - Effect: 'Allow'
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                Resource:
+                  - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:prod/battle.net/client-cpH9hz'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - dynamodb.amazonaws.com
+                - events.amazonaws.com
+                - lambda.amazonaws.com
+
+  UpdateCharactersSchedule:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/UpdateCharacters/index.handler
+      Description: Updates characters on a regular basis.
+      Timeout: 600
+      Role: !GetAtt UpdateCharactersLambdaRole.Arn
+      Events:
+        CharacterUpdateSchedule:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: 'cron(15 00 * * ? *)'
+            ScheduleExpressionTimezone: Europe/London
+            RetryPolicy:
+              MaximumRetryAttempts: 0
+            FlexibleTimeWindow:
+              Mode: 'OFF'
+            RoleArn: !GetAtt UpdatesCharactersScheduleRole.Arn
+
+  CheckValidUserSchedule:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/CheckValidUser/index.handler
+      Description: Checks if users are valid or not.
+      Timeout: 600
+      Role: !GetAtt UpdateCharactersLambdaRole.Arn
+      Events:
+        CharacterUpdateSchedule:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: 'cron(10 00 * * ? *)'
+            ScheduleExpressionTimezone: Europe/London
+            RetryPolicy:
+              MaximumRetryAttempts: 0
+            FlexibleTimeWindow:
+              Mode: 'OFF'
+            RoleArn: !GetAtt UpdatesCharactersScheduleRole.Arn
 
 Outputs:
   LandingPageCloudFrontId:

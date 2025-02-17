@@ -75,7 +75,7 @@ export type ItemResponse = {
   equipped_items: Item[];
 };
 
-type Item = {
+export type Item = {
   item: {
     id: number;
   };

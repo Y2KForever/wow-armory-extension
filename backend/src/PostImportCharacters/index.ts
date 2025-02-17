@@ -1,5 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { ApiResult, authorizeUser, chunkArray, omit, toUnderscores, verifyJwt } from '../utils/utils';
+import { ApiResult, authorizeUser, chunkArray, omit, verifyJwt } from '../utils/utils';
 import { getTwitchExtensionSecret } from '../utils/secretsManager';
 import { PostImportCharactersBody } from '../types/Api';
 import { DynamoDBClient, TransactWriteItemsCommand, TransactWriteItemsInput } from '@aws-sdk/client-dynamodb';
@@ -62,6 +62,8 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
       }),
     );
 
+    const now = new Date().toISOString();
+
     const params: TransactWriteItemsInput = {
       TransactItems: enrichedCharacter.map((character) => ({
         Put: {
@@ -73,6 +75,8 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
             realm_name: { S: character.realm.name.toLowerCase() },
             user_id: { N: userId },
             region: { S: body.region },
+            updated_at: { S: now },
+            created_at: { S: now },
           },
         },
       })),
