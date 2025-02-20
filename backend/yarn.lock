@@ -1062,10 +1062,10 @@
     "@smithy/types" "^4.1.0"
     tslib "^2.6.2"
 
-"@middy/core@^3.x.x":
-  version "3.6.2"
-  resolved "https://registry.yarnpkg.com/@middy/core/-/core-3.6.2.tgz#8d3fd3b4aa4c62a9f21a340559d6b6d3c0b37ca7"
-  integrity sha512-/vyvG34RIt7CTmuB/jksGkk9vs6RCoOlRFPfdQq11dHkiKlT2mm8j/jZx7gSpEhXXh9LeaEMuKPnsgWBIlGS1g==
+"@middy/core@^6.x.x":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.0.0.tgz#f1ecbe9809816cc8f5d08a69311861f0103387d6"
+  integrity sha512-EFsvMkyFfaIu3Uzye26w2NzycwMAbh/99XlhRH9p240y/YKA0nlQ7itE8y7lBJOJ/clj1qu9evQeLfaiWhJAFg==
 
 "@middy/error-logger@^3.x.x":
   version "3.6.2"
