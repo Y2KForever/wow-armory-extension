@@ -1067,10 +1067,10 @@
   resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.0.0.tgz#f1ecbe9809816cc8f5d08a69311861f0103387d6"
   integrity sha512-EFsvMkyFfaIu3Uzye26w2NzycwMAbh/99XlhRH9p240y/YKA0nlQ7itE8y7lBJOJ/clj1qu9evQeLfaiWhJAFg==
 
-"@middy/error-logger@^3.x.x":
-  version "3.6.2"
-  resolved "https://registry.yarnpkg.com/@middy/error-logger/-/error-logger-3.6.2.tgz#dcb37d9d5beb1a5e988af288f24c28e495ab4bd8"
-  integrity sha512-7pGHuYWbBHsowtb+s4IDkfackp/kNe/iDTdqMzV8RoFfa+w3Oljre54fVquLVMe9+O98mA/woXYPJtv4MGVnUw==
+"@middy/error-logger@^6.x.x":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@middy/error-logger/-/error-logger-6.0.0.tgz#0b5c1c41060a8a6c0f8651ef04360c6fb3ca3b2f"
+  integrity sha512-70OK5e3D+G966yYqV0a6r3HMYm7FleCKCgxpo9SkbznMRK7/sFh+gBnniJ+Y5qHMgyhsf45jSNM/ewPGhGLSTw==
 
 "@smithy/abort-controller@^4.0.0":
   version "4.0.0"
