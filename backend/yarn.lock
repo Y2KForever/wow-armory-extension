@@ -75,12 +75,17 @@
   resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/commons/-/commons-1.18.1.tgz#fcfdef39639105a7b2b5363e4bcade9d277f5468"
   integrity sha512-gFRgQ2GJDghKvf+fXvT0kQVftgOT05W+hCa7RkfZj6HSjVAO+9DZZeJL3JK1HcsLAjWRj7W9ra0/MqB3Abf+PQ==
 
-"@aws-lambda-powertools/logger@^1.18.0":
-  version "1.18.1"
-  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/logger/-/logger-1.18.1.tgz#6388ddbafca6b3f65277b7a364df45f426f5c592"
-  integrity sha512-GsSMqaFXCSz+llSOn2CVNMoN+j/jNsS6JP2Opy9myU0tvg7PeuU3+rN24vKyibUwpxM466IzWFBSJkYdm0bqVw==
+"@aws-lambda-powertools/commons@^2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/commons/-/commons-2.14.0.tgz#4eeed4a2ad9ec53fcd6a9ddd30039900ada613c2"
+  integrity sha512-tJPVanYElAo0WymoQ0pyELpHdGCz9u7ERKdCwHv4abtJFY2VVoIMLtsUs8xUczV2hjIWl0+ye9CGYCBazKYB3Q==
+
+"@aws-lambda-powertools/logger@^2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/logger/-/logger-2.14.0.tgz#0cefdb976748a0f671e6f65e288c3b4426acd196"
+  integrity sha512-gumsz+1yGBLB3zPB6Qlsw4Vse9SRgsg2qAy1Ocv+o7tE8AZiPslFFG1EldpNzz1hoGBzsdIKgoRlrUIdW8Pumg==
   dependencies:
-    "@aws-lambda-powertools/commons" "^1.18.1"
+    "@aws-lambda-powertools/commons" "^2.14.0"
     lodash.merge "^4.6.2"
 
 "@aws-lambda-powertools/tracer@^1.18.0":
