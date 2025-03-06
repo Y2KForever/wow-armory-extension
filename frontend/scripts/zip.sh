@@ -9,5 +9,5 @@ if [ ! -d "$DIST_FOLDER" ]; then
 fi
 
 ZIP_NAME="dist-v$VERSION.zip"
-(cd "$DIST_FOLDER" && zip -r "../releases/$ZIP_NAME" .)
+(cd "$DIST_FOLDER" && zip -r "../releases/$ZIP_NAME" . -x "landing*" -x "*/landing*")
 echo "Created zip: $ZIP_NAME"

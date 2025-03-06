@@ -168,6 +168,32 @@ Resources:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
 
+  WoWExtensionTalentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wow-extension-talents
+      AttributeDefinitions:
+        - AttributeName: spec
+          AttributeType: S
+        - AttributeName: class
+          AttributeType: S
+      KeySchema:
+        - AttributeName: spec
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+        - IndexName: class-index
+          KeySchema:
+            - AttributeName: class
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
   WoWExtensionCdnBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -288,6 +314,8 @@ Resources:
                 Resource:
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-talents'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-talents/index/class-index'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters/index/user_id-index'
                   - !Sub 'arn:aws:s3:::wow-extension-cdn/*'
               - Effect: 'Allow'
@@ -452,6 +480,12 @@ Resources:
                   - 'secretsmanager:GetSecretValue'
                 Resource:
                   - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:prod/battle.net/client-cpH9hz'
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: arn:aws:logs:*:*:log-group:/aws/lambda/*
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -502,6 +536,23 @@ Resources:
             FlexibleTimeWindow:
               Mode: 'OFF'
             RoleArn: !GetAtt UpdatesCharactersScheduleRole.Arn
+
+  GetTalentsFunction:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/GetTalents/index.handler
+      Description: Fetches all talents
+      Timeout: 600
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetTalents:
+          Type: Api
+          Properties:
+            Path: /talents
+            Method: GET
+            RestApiId:
+              Ref: API
 
 Outputs:
   LandingPageCloudFrontId:
