@@ -1,14 +1,16 @@
-name: Auto approve PRs by dependabot
+name: Dependabot auto-approve
+on: pull_request
 
-on: pull_request_target
+permissions:
+  pull-requests: write
 
 jobs:
-  autoapprove:
-    name: Auto-Approve a PR by dependabot
+  dependabot:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'y2kforever/wow-armory-extension'
     steps:
-      - name: Auto approve
-        uses: cognitedata/auto-approve-dependabot-action@v3.0.1
-        if: github.actor == 'dependabot[bot]' || github.actor == 'dependabot-preview[bot]'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Approve a PR
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
