@@ -49,13 +49,14 @@ const processCharacter = async (character: DynamoCharacter, baseUrl: string): Pr
       return null;
     }
 
-    const [mediaData, items, summary] = await Promise.all([
+    const [mediaData, items, summary, talents] = await Promise.all([
       BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl),
       BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl),
       BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl),
+      BattleNetApiManager.fetchCharacterSpecializations(apiChar, character.region, baseUrl),
     ]);
 
-    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid };
+    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents };
   } catch (err) {
     console.error(`Error processing character ${character.character_id}:`, err);
     throw err;
