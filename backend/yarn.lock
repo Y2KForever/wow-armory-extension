@@ -886,10 +886,10 @@
   dependencies:
     tslib "^2.6.2"
 
-"@aws-sdk/util-dynamodb@^3.751.0":
-  version "3.751.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/util-dynamodb/-/util-dynamodb-3.751.0.tgz#d93225ec96a1f9bad911801ff0083558f8881c00"
-  integrity sha512-+dFK+SqM6CLcGIXYGl8f65aCnhYtty3dSmmGqd/VMi8cfAeVLZpS77LqanCJylbp607mjNQODY0ZnU38P/tYuA==
+"@aws-sdk/util-dynamodb@^3.758.0":
+  version "3.758.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/util-dynamodb/-/util-dynamodb-3.758.0.tgz#e68d19a83b875b8ac963b242fb46855495e7981d"
+  integrity sha512-JjBbhJLajilyMWJ/z82bYgIMj9XGISZ/QMYSpNBdzGFRmL1AL9s6NwLB6FuquRvpY9Lo3Y5vwEbedqdZPIrRFg==
   dependencies:
     tslib "^2.6.2"
 
