@@ -54,7 +54,8 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
           const mediaData = await BattleNetApiManager.fetchCharacterMedia(character, body.region, baseUrl);
           const items = await BattleNetApiManager.fetchCharacterItems(character, body.region, baseUrl);
           const summary = await BattleNetApiManager.fetchCharacterSummary(character, body.region, baseUrl);
-          return { ...character, ...mediaData, ...items, ...summary, ...isValid };
+          const talents = await BattleNetApiManager.fetchCharacterSpecializations(character, body.region, baseUrl);
+          return { ...character, ...mediaData, ...items, ...summary, ...isValid, ...talents };
         } catch (err) {
           console.log(err);
           return character;

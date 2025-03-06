@@ -165,3 +165,53 @@ export type CharacterSummary = {
 export type CharacterStatus = {
   is_valid: boolean;
 };
+
+export type CharacterSpecializations = {
+  specializations: {
+    specialization: {
+      name: string;
+      id: number;
+    };
+    loadouts: {
+      is_active: boolean;
+      talent_loadout_code: string;
+      selected_class_talents: Talents[];
+      selected_spec_talents: Talents[];
+      selected_hero_talents: Talents[];
+    }[];
+  }[];
+  active_specialization: {
+    name: string;
+    id: number;
+  };
+  active_hero_talent_tree: {
+    name: string;
+    id: number;
+  };
+};
+
+export type Talents = {
+  id: number;
+  rank: number;
+  tooltip?: {
+    talent: {
+      name: string;
+      id: number;
+    };
+    spell_tooltip: {
+      spell: {
+        key: {
+          href: string;
+        };
+        name: string;
+        id: number;
+      };
+      description: string;
+      cast_time: string;
+      cooldown: string;
+      range?: string;
+      power_cost?: string;
+    };
+    default_points?: number;
+  };
+};
