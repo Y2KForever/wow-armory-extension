@@ -1,28 +1,43 @@
 import { motion } from 'framer-motion';
 import { IViewProps } from '../pages/Panel';
-import { CharacterHeader } from './CharacterHeader';
+import { MenuHeader } from './CharacterHeader';
 import { CharacterItem } from './CharacterItem';
 import { ApiCharacter, slotsOrderBottom, slotsOrderLeft, slotsOrderRight } from '@/types/Characters';
-import { removeSpace } from '@/lib/utils';
+import { removeSpace, toUnderscores } from '@/lib/utils';
 import { ItemLevel } from '@/assets/icons/ItemLevel';
+import { useFetchTalentsQuery } from '@/store/api/characters';
+import { useAppSelect } from '@/store/store';
+import { selectSelectedTalents } from '@/store/selectors/selectTalents';
 
 interface ICharacterProps {
   setView: React.Dispatch<React.SetStateAction<IViewProps>>;
   character: ApiCharacter;
+  view: IViewProps;
 }
 
-export const Character = ({ setView, character }: ICharacterProps) => {
+export const Character = ({ setView, character, view }: ICharacterProps) => {
+  const selectTalents = useAppSelect(selectSelectedTalents);
+  const classSpec = `${character.spec.toLowerCase()}-${toUnderscores(character.class.toLowerCase())}`;
+  const { isError: talentError, isLoading: talentLoading } = useFetchTalentsQuery(
+    {
+      spec: `${classSpec}`,
+      character: character,
+    },
+    {
+      skip: selectTalents?.spec === classSpec,
+    },
+  );
+
+  const isTalentsDisabled = talentError || talentLoading;
+
   return (
-    <motion.div
-      key={'item'}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex flex-col flex-1 justify-center w-full"
-    >
-      <CharacterHeader setView={setView} />
-      <div
+    <div key={'item'} className="flex flex-col flex-1 justify-center w-full">
+      <MenuHeader setView={setView} view={view} isTalentDisabled={isTalentsDisabled} />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
         style={{
           backgroundImage: `url(https://cdn.y2kforever.com/class/${removeSpace(character.class.toLowerCase())}.webp)`,
         }}
@@ -72,7 +87,7 @@ export const Character = ({ setView, character }: ICharacterProps) => {
             ))}
           </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };

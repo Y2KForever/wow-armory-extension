@@ -1,11 +1,13 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import { ApiCharacter, ApiCharacterStatus, ApiCharacterSummary, ApiItems } from '../types/Api';
+import { ApiCharacter, ApiCharacterStatus, ApiCharacterSummary, ApiCharacterTalents, ApiItems } from '../types/Api';
 import {
+  CharacterSpecializations,
   CharactersResponse,
   CharacterStatus,
   CharacterSummary,
   ItemResponse,
   MediaResponse,
+  Talents,
   TokenResponse,
 } from '../types/BattleNet';
 import { getClientCredentials } from '../utils/secretsManager';
@@ -43,6 +45,14 @@ class BattleNetApi {
 
   private getNamespace(character: ApiCharacter, region: string): string {
     return character.namespace === 'retail' ? `profile-${region}` : `${character.namespace}-${region}`;
+  }
+
+  private getActiveLoadout(data: CharacterSpecializations) {
+    const activeSpecId = data.active_specialization.id;
+    const activeSpec = data.specializations.find((spec) => spec.specialization.id === activeSpecId);
+    if (!activeSpec) return null;
+    const activeLoadout = activeSpec.loadouts.find((loadout) => loadout.is_active);
+    return activeLoadout ?? null;
   }
 
   private async makeRequest(
@@ -139,6 +149,45 @@ class BattleNetApi {
     }
   }
 
+  private async processSockets(
+    sockets: any[] | undefined,
+    itemId: number,
+  ): Promise<
+    Array<{
+      type: string;
+      item: { name?: string; value: string };
+      image?: string;
+    }>
+  > {
+    if (!sockets || sockets.length === 0) return [];
+    const client = BattleNetApi.getS3Client();
+    return Promise.all(
+      sockets.map(async (socket) => {
+        const socketMediaUrl = socket.media?.key.href;
+        let processedImage: string | undefined = undefined;
+        if (socketMediaUrl) {
+          const socketImagesResp = await this.makeRequest(socket.media.key.href, 'GET', false);
+          const socketJSON = (await socketImagesResp.json()) as MediaResponse;
+          if (socketJSON.assets?.length) {
+            const socketImage = socketJSON.assets[0];
+            const ext = socketImage.value.split('.').pop()?.toLowerCase() || 'jpg';
+            const socketFilename = `${itemId}-${socket.socket_type.type}.${ext}`;
+            const socketS3Key = `sockets/${socketFilename}`;
+            processedImage = await this.processSocketMedia(socketImage.value, socketS3Key, client);
+          }
+        }
+        return {
+          type: socket.socket_type.type,
+          item: {
+            name: socket.item?.name,
+            value: socket.display_string,
+          },
+          image: processedImage,
+        };
+      }),
+    );
+  }
+
   private async processSocketMedia(socketMediaUrl: string, socketS3Key: string, client: S3Client): Promise<string> {
     const exists = await checkIfImageExist(socketS3Key, client);
     if (!exists) {
@@ -232,6 +281,48 @@ class BattleNetApi {
     return { is_valid: data.is_valid };
   }
 
+  public async fetchCharacterSpecializations(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+  ): Promise<ApiCharacterTalents> {
+    try {
+      const url = this.buildCharacterUrl(character, region, baseUrl, 'specializations');
+      const resp = await this.makeRequest(url, 'GET', true, this.getNamespace(character, region));
+      const data = (await resp.json()) as CharacterSpecializations;
+      const activeSpecId = data.active_specialization?.id;
+      const activeHeroTalentId = data.active_hero_talent_tree?.id;
+
+      const activeLoadout = this.getActiveLoadout(data);
+      if (!activeLoadout) {
+        throw new Error(`Failed to find any active loadout`);
+      }
+
+      const extractTalentIds = (talents: Talents[] | undefined): number[] => {
+        if (!talents) return [];
+        return talents.map((talent) => talent.tooltip?.talent.id).filter((id): id is number => id !== undefined);
+      };
+
+      const classTalents = extractTalentIds(activeLoadout.selected_class_talents);
+      const specTalents = extractTalentIds(activeLoadout.selected_spec_talents);
+      const heroTalents = extractTalentIds(activeLoadout.selected_hero_talents);
+
+      return {
+        talents: {
+          id: activeSpecId,
+          hero_id: activeHeroTalentId,
+          class_talents: classTalents,
+          spec_talents: specTalents,
+          hero_talents: heroTalents,
+          loadout_code: activeLoadout.talent_loadout_code,
+        },
+      };
+    } catch (err) {
+      console.error(`Failed to fetch specialization, error: ${err}`);
+      throw err;
+    }
+  }
+
   public async fetchCharacterSummary(
     character: ApiCharacter,
     region: string,
@@ -277,35 +368,8 @@ class BattleNetApi {
           }
         }
 
-        let processedSockets: Array<{
-          type: string;
-          item: { name?: string; value: string };
-          image?: string;
-        }> = [];
+        const processedSockets = await this.processSockets(item.sockets, item.item.id);
 
-        if (item.sockets && item.sockets.length > 0) {
-          processedSockets = await Promise.all(
-            item.sockets.map(async (socket) => {
-              const socketFilename = `${item.item.id}-${socket.socket_type.type}.png`;
-              const socketS3Key = `sockets/${socketFilename}`;
-              const socketMediaUrl = socket.media?.key.href;
-
-              let processedImage: string | undefined = undefined;
-              if (socketMediaUrl) {
-                processedImage = await this.processSocketMedia(socketMediaUrl, socketS3Key, client);
-              }
-
-              return {
-                type: socket.socket_type.type,
-                item: {
-                  name: socket.item?.name,
-                  value: socket.display_string,
-                },
-                image: processedImage,
-              };
-            }),
-          );
-        }
         return {
           [slot]: {
             enchantments: item.enchantments

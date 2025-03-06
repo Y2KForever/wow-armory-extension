@@ -8,9 +8,11 @@ import { motion } from 'framer-motion';
 import { Character } from '../components/Character';
 import SimpleBar from 'simplebar-react';
 import 'simplebar-react/dist/simplebar.min.css';
+import { Views } from '@/types/User';
+import { Talents } from '../components/Talents';
 
 export interface IViewProps {
-  view: 'list' | 'item';
+  view: Views;
   character: ApiCharacter | null;
 }
 
@@ -33,9 +35,22 @@ const ItemView = () => {
     return <></>;
   }
 
-  const { setView } = context;
+  const { setView, view } = context;
 
-  return <Character character={context.view.character} setView={setView} />;
+  return <Character character={context.view.character} setView={setView} view={view} />;
+};
+
+const TalentView = () => {
+  const context = useContext(ViewContext);
+  if (!context) throw new Error(`Itemview must be used within a ViewContext.Provider`);
+
+  if (!context.view.character) {
+    return <></>;
+  }
+
+  const { setView, view } = context;
+
+  return <Talents view={view} setView={setView} />;
 };
 
 const ListView = ({ characters }: IListViewProps) => {
@@ -55,7 +70,7 @@ const ListView = ({ characters }: IListViewProps) => {
     >
       <div className="flex flex-col w-full font-semplicita no-scrollbar">
         {characters.map((char) => (
-          <div key={char.character_id} onClick={() => setView({ view: 'item', character: char })}>
+          <div key={char.character_id} onClick={() => setView({ view: Views.ITEM, character: char })}>
             <Characters character={char} />
           </div>
         ))}
@@ -67,7 +82,7 @@ const ListView = ({ characters }: IListViewProps) => {
 export const Panel = () => {
   const twitchAuth = useContext(TwitchAuthContext);
   const isAuthLoading = !twitchAuth.authorized || !twitchAuth.channelId;
-  const [view, setView] = useState<IViewProps>({ view: 'list', character: null });
+  const [view, setView] = useState<IViewProps>({ view: Views.LIST, character: null });
 
   const {
     isLoading: isProfileLoading,
@@ -103,7 +118,7 @@ export const Panel = () => {
 
   return (
     <ViewContext.Provider value={{ view, setView }}>
-      {view.view === 'list' && (
+      {view.view === Views.LIST && (
         <SimpleBar style={{ width: '100%', maxHeight: 500 }}>
           {data?.characters ? (
             <ListView characters={data.characters} />
@@ -114,7 +129,8 @@ export const Panel = () => {
           )}
         </SimpleBar>
       )}
-      {view.view === 'item' && <ItemView />}
+      {view.view === Views.ITEM && <ItemView />}
+      {view.view === Views.TALENTS && <TalentView />}
     </ViewContext.Provider>
   );
 };
