@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   dependabot-auto-merge:
-    if: github.actor == 'dependabot[bot]'
+    if: github.actor == 'dependabot'
     runs-on: ubuntu-latest
     steps:
       - name: Dependabot Auto Merge
