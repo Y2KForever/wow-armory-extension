@@ -5,3 +5,35 @@ body,
   min-height: 500px;
   overflow-x: hidden;
 }
+
+.col-start-15 {
+  grid-column-start: 15;
+}
+
+.col-start-16 {
+  grid-column-start: 16;
+}
+
+.col-start-17 {
+  grid-column-start: 17;
+}
+
+.col-start-18 {
+  grid-column-start: 18;
+}
+
+.col-start-19 {
+  grid-column-start: 19;
+}
+
+.col-start-20 {
+  grid-column-start: 20;
+}
+
+.col-start-21 {
+  grid-column-start: 21;
+}
+
+/* .bg-transparent {
+  background-color: transparent;
+} */
