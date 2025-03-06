@@ -1,4 +1,5 @@
 import {
+  AttributeValue,
   DynamoDBClient,
   GetItemCommand,
   GetItemCommandInput,
@@ -11,6 +12,7 @@ import { middyCore } from '../utils/middyWrapper';
 import { getTwitchExtensionSecret } from '../utils/secretsManager';
 import jwt from 'jsonwebtoken';
 import { JWT } from '../types/Twitch';
+import { unmarshall } from '@aws-sdk/util-dynamodb';
 
 const ddbClient = new DynamoDBClient();
 
@@ -83,7 +85,11 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
 
     const { Items } = await ddbClient.send(queryCommand);
 
-    const characterResponse = simplifyDynamoDBResponse(Items);
+    const characterResponse = Items?.map((item) => {
+      return unmarshall(item);
+    });
+
+    console.log('CharacterResponse: ', JSON.stringify(characterResponse));
 
     return ApiResult(
       200,
