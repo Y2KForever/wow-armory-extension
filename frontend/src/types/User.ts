@@ -8,3 +8,9 @@ export type User = {
   authorized: boolean;
   characters: ApiCharacter[];
 };
+
+export enum Views {
+  LIST = 'list',
+  ITEM = 'item',
+  TALENTS = 'talents',
+}

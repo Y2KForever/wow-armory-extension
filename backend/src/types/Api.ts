@@ -74,6 +74,7 @@ type CharacterItem = {
   requirement: string | null;
   level: number;
   transmog: string | null;
+  enchantments: string[] | null;
 };
 
 export type ApiItems = Record<string, CharacterItem>;
@@ -91,4 +92,15 @@ export type ApiCharacterSummary = {
 
 export type ApiCharacterStatus = {
   is_valid: boolean;
+};
+
+export type ApiCharacterTalents = {
+  talents: {
+    id: number;
+    hero_id: number;
+    class_talents: number[];
+    spec_talents: number[];
+    hero_talents: number[];
+    loadout_code: string;
+  };
 };

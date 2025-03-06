@@ -26,3 +26,7 @@ export const toSpaces = (input: string): string => {
 };
 
 export const removeSpace = (input: string): string => input.toLowerCase().replace(/\s/g, '');
+
+export const toUnderscores = (input: string) => input.toLowerCase().replace(/\s+/g, '_');
+
+export const readableSpec = (input?: string) => (input ? Capitalize(toSpaces(input.replace(/\-.*$/gm, ''))) : '');
