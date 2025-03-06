@@ -1,12 +1,14 @@
-import { WowCharacter } from '@/types/Characters';
+import { ApiTalents, WowCharacter } from '@/types/Characters';
 import { createSlice } from '@reduxjs/toolkit';
 
 interface CharactersState {
   characters: WowCharacter[];
+  talents: ApiTalents | null;
 }
 
 const initialState: CharactersState = {
   characters: [],
+  talents: null,
 };
 
 const charactersSlice = createSlice({
@@ -19,9 +21,15 @@ const charactersSlice = createSlice({
     clearCharacters: (state) => {
       state.characters = [];
     },
+    setTalents: (state, action) => {
+      state.talents = action.payload;
+    },
+    clearTalents: (state) => {
+      state.talents = null;
+    },
   },
 });
 
-export const { clearCharacters, setCharacters } = charactersSlice.actions;
+export const { clearCharacters, setCharacters, setTalents, clearTalents } = charactersSlice.actions;
 
 export default charactersSlice.reducer;

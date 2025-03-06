@@ -7,7 +7,7 @@ export type ddbProfile = {
   region: string;
   state: string;
   updated_at: string;
-}
+};
 
 export type DynamoCharacter = {
   character_id: number;
@@ -51,4 +51,82 @@ export type DynamoCharacter = {
   user_id: number;
   waist: Item | null;
   wrist: Item | null;
+  classTalents?: CharacterTalent[];
+  heroTalents?: CharacterTalent[];
+};
+
+export type CharacterTalent = {
+  name: string;
+  id: number;
+  rank: number;
+  description: string;
+  cast_time: string;
+  cooldown?: string;
+  power_cost?: string;
+  range?: string;
+  default_points?: number;
+};
+
+export type Talents = {
+  hero_talents: HeroTalents[];
+  spec_talents: Talent[];
+  class_talents: Talent[];
+  class: string;
+  spec: string;
+};
+
+type HeroTalents = {
+  id: number;
+  name: string;
+  talents: Talent[];
+};
+
+export type Talent = {
+  name?: string;
+  col: number;
+  locked_by: number[];
+  ranks: Rank[];
+  row: number;
+  id: number;
+  unlocks: number[];
+  type: string;
+};
+
+type Rank = {
+  rank: number;
+  choice_of_tooltips?: {
+    spell_tooltip: {
+      spell: Spell;
+      description: string;
+      cast_time: string;
+      cooldown?: string;
+      range?: string;
+      power_cost?: string;
+    };
+  };
+  tooltip?: {
+    spell_tooltip: {
+      spell: Spell;
+      description: string;
+      cast_time: string;
+      cooldown?: string;
+      range?: string;
+      power_cost?: string;
+    };
+    talent: {
+      name: string;
+      key: {
+        href: string;
+      };
+      id: number;
+    };
+  };
+};
+
+type Spell = {
+  name: string;
+  id: number;
+  key: {
+    href: string;
+  };
 };
