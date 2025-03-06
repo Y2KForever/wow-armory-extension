@@ -179,6 +179,7 @@ export const checkIfImageExist = async (filename: string, client: S3Client): Pro
 export const downloadImage = async (url: string): Promise<Buffer> => {
   const resp = await fetch(url);
   if (!resp.ok) {
+    console.log(`url`, url);
     console.log('resp-status', resp.statusText);
     console.log('resp', await resp.text());
     throw new Error(`Failed to download image: ${resp.statusText}`);

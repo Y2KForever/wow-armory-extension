@@ -8,6 +8,10 @@ export default {
     { pattern: /border-rarity-/ },
     { pattern: /bg-/ },
     { pattern: /text-rarity-/ },
+    { pattern: /row-start-/ },
+    { pattern: /col-start-/ },
+    { pattern: /grayscale/ },
+    { pattern: /fill-/ },
   ],
   content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
   theme: {

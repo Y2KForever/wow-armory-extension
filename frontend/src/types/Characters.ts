@@ -57,15 +57,25 @@ type ApiCharacter = {
   faction: string;
   inset: string;
   class: string;
+  spec: string;
   title: string;
   name: string;
   level: number;
   character_id: number;
   race: string;
   equip_item_level: number;
+  talents: {
+    class_talents: number[];
+    hero_id: number;
+    id: number;
+    hero_talents: number[];
+    spec_talents: number[];
+    loadout_code: string;
+  };
 } & {
   [slot: string]: {
     sockets?: {
+      image: string;
       type: string;
       item: {
         name: string;
@@ -104,6 +114,7 @@ type ApiCharacter = {
     requirement: string | null;
     level: number;
     transmog: string | null;
+    enchantments: string[] | null;
   };
 };
 
@@ -140,5 +151,88 @@ const typeMap: Record<string, string> = {
   'off-hand': 'offhand',
 };
 
-export type { WowCharacter, ApiCharacter };
-export { Slot, slotsOrderLeft, slotsOrderRight, slotsOrderBottom, Faction, typeMap };
+type SpellTooltip = {
+  spell: Spell;
+  description: string;
+  current_rank: number;
+  cast_time?: string;
+  cooldown?: string;
+  range?: string;
+  power_cost?: string;
+  talent: {
+    name: string;
+    key: {
+      href: string;
+    };
+    id: number;
+  };
+};
+
+type Tooltip = {
+  spell_tooltip: SpellTooltip;
+  choice_of_tooltips?: {
+    spell_tooltip: SpellTooltip;
+  }[];
+};
+
+type Rank = {
+  rank: number;
+  tooltip?: Tooltip;
+};
+
+type Talent = {
+  name?: string;
+  col: number;
+  locked_by: number[];
+  ranks: Rank[];
+  row: number;
+  id: number;
+  unlocks: number[];
+  type: string;
+};
+
+type HeroTalent = {
+  id: number;
+  name: string;
+  talents: Talent[];
+};
+
+type ApiTalents = {
+  hero_talents: HeroTalent[];
+  spec_talents: Talent[];
+  class_talents: Talent[];
+  class: string;
+  spec: string;
+};
+
+type Spell = {
+  name: string;
+  id: number;
+  key: {
+    href: string;
+  };
+};
+
+interface UniqueTalent {
+  col: number;
+  row: number;
+  spells: {
+    spell?: Spell;
+    description: string;
+    castTime?: string;
+    cooldown?: string;
+    powercost?: string;
+    range?: string;
+    talent_id: number;
+    rank: number
+  }[];
+}
+
+enum TalentType {
+  SPEC = 'spec',
+  CLASS = 'class',
+  HERO = 'hero',
+}
+
+export type { WowCharacter, ApiCharacter, ApiTalents, Talent, HeroTalent, Rank, Tooltip, UniqueTalent };
+export { Slot, slotsOrderLeft, slotsOrderRight, slotsOrderBottom, Faction, typeMap, type Spell, TalentType };
