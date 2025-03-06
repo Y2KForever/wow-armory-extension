@@ -20,7 +20,7 @@
   "dependencies": {
     "@aws-lambda-powertools/logger": "^1.18.0",
     "@aws-lambda-powertools/tracer": "^1.18.0",
-    "@aws-sdk/client-dynamodb": "^3.632.0",
+    "@aws-sdk/client-dynamodb": "^3.758.0",
     "@aws-sdk/client-s3": "^3.738.0",
     "@aws-sdk/client-secrets-manager": "^3.637.0",
     "@aws-sdk/util-dynamodb": "^3.751.0",
