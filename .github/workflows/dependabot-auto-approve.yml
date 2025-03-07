@@ -10,7 +10,9 @@ jobs:
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'y2kforever/wow-armory-extension'
     steps:
       - name: Approve a PR
-        run: gh pr review --approve "$PR_URL"
+        run: |
+          gh pr review --approve "$PR_URL"
+          gh pr comment "$PR_URL" --body "@dependabot merge"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
