@@ -52,7 +52,13 @@ export const profileApi = createApi({
         },
       }),
     }),
+    getForceUpdate: builder.query({
+      query: ({}) => ({
+        url: 'force-update',
+        method: 'GET',
+      }),
+    }),
   }),
 });
 
-export const { useGetProfileQuery, useLazyGetGenerateSignedUrlQuery } = profileApi;
+export const { useGetProfileQuery, useLazyGetGenerateSignedUrlQuery, useLazyGetForceUpdateQuery } = profileApi;
