@@ -961,9 +961,9 @@
   integrity sha512-0Q03mDG+NuU0clJUZfAVHHqkpt3rXn2jpGO7uD+G+OF9DWGLRpASX0R91kkN9GEbiRtIZ+Njve8V+ECXFEToNQ==
 
 "@middy/error-logger@^6.x.x":
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/@middy/error-logger/-/error-logger-6.0.0.tgz#0b5c1c41060a8a6c0f8651ef04360c6fb3ca3b2f"
-  integrity sha512-70OK5e3D+G966yYqV0a6r3HMYm7FleCKCgxpo9SkbznMRK7/sFh+gBnniJ+Y5qHMgyhsf45jSNM/ewPGhGLSTw==
+  version "6.1.5"
+  resolved "https://registry.yarnpkg.com/@middy/error-logger/-/error-logger-6.1.5.tgz#903a9cdecfa76150412edf54116af35bfa92523e"
+  integrity sha512-SFDdkXgUMewqv5Z2UW1kwzvUozDOODz1ibn5gt2u1DtqTyz82iDVBxWVDx1CUH6RtZVdLwrtJd9o7AxLivDRiA==
 
 "@smithy/abort-controller@^4.0.1":
   version "4.0.1"
