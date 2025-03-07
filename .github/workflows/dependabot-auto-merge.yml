@@ -1,18 +1,19 @@
-name: Dependabot auto-merge
-on: pull_request
-
-permissions:
-  contents: write
-  pull-requests: write
-
+name: Dependabot
+'on': pull_request
 jobs:
-  dependabot:
+  auto-approve:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'y2kforever/wow-armory-extension'
+    permissions:
+      pull-requests: write
     steps:
-      - name: Enable auto-merge for Dependabot PRs
-        if: contains(steps.metadata.outputs.dependency-names, 'my-dependency') && steps.metadata.outputs.update-type == 'version-update:semver-patch'
-        run: gh pr merge --auto --merge "$PR_URL"
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - uses: hmarr/auto-approve-action@v4
+        if: >-
+          github.event.pull_request.user.login == 'dependabot[bot]' || github.event.pull_request.user.login ==
+          'dependabot-preview[bot]'
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ahmadnassri/action-dependabot-auto-merge@v2
+        with:
+          target: patch
+          github-token: '${{ secrets.PAT_TOKEN }}'

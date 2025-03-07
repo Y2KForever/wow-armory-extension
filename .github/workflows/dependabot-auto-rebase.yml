@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  pull-requests: write
+  pull-requests: write-all
 
 jobs:
   rebase-dependabot:
