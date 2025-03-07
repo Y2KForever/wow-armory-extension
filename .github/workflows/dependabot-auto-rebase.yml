@@ -6,13 +6,11 @@ on:
       - main
 
 permissions:
-  pull-requests: write
+  pull-requests: write-all
 
 jobs:
   rebase-dependabot:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     steps:
       - name: List Dependabot PRs for current branch
         run: |
