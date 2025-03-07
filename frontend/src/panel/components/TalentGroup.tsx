@@ -1,3 +1,4 @@
+import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { TalentType, UniqueTalent } from '@/types/Characters';
 import { IViewProps } from '../pages/Panel';
@@ -60,9 +61,8 @@ export const TalentGroup = ({ talents, view, type }: ITalentGroupProps) => {
                         const shouldSplit = speccedSpells.length === 0 && talentGroup.spells.length >= 2;
 
                         return (
-                          <>
+                          <React.Fragment key={`${spell.spell?.name}-${idx}`}>
                             <div
-                              key={`${spell.spell?.name}-${idx}`}
                               className={`absolute inset-0 w-full h-full ${!isSpecced ? 'grayscale' : ''}`}
                               style={{
                                 backgroundImage: `url(https://cdn.y2kforever.com/talents/${spell.spell?.id}.jpg)`,
@@ -78,7 +78,7 @@ export const TalentGroup = ({ talents, view, type }: ITalentGroupProps) => {
                               style={{ fontSize: 'xx-small', bottom: 0, right: 0 }}
                               className="font-semplicita text-center absolute bg-primary/90 text-white w-full"
                             >{`${speccedSpells.length} / ${spell.rank}`}</div>
-                          </>
+                          </React.Fragment>
                         );
                       })}
                     </div>

@@ -1,6 +1,6 @@
 {
   "name": "wow-armory-extension-backend",
-  "version": "0.0.1",
+  "version": "0.2.1",
   "description": "Backend for the wow armory extension",
   "main": "index.js",
   "author": "Niklas Hansen",
