@@ -956,9 +956,9 @@
     tslib "^2.6.2"
 
 "@middy/core@^6.x.x":
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.0.0.tgz#f1ecbe9809816cc8f5d08a69311861f0103387d6"
-  integrity sha512-EFsvMkyFfaIu3Uzye26w2NzycwMAbh/99XlhRH9p240y/YKA0nlQ7itE8y7lBJOJ/clj1qu9evQeLfaiWhJAFg==
+  version "6.1.5"
+  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.1.5.tgz#ffcb3ec240bae79fcf4b1f831e3ab55f4003724f"
+  integrity sha512-0Q03mDG+NuU0clJUZfAVHHqkpt3rXn2jpGO7uD+G+OF9DWGLRpASX0R91kkN9GEbiRtIZ+Njve8V+ECXFEToNQ==
 
 "@middy/error-logger@^6.x.x":
   version "6.0.0"
