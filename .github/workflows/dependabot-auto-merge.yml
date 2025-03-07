@@ -4,16 +4,14 @@ jobs:
   auto-approve:
     runs-on: ubuntu-latest
     steps:
-      - uses: hmarr/auto-approve-action@v2.0.0
+      - uses: hmarr/auto-approve-action@v4
         if: >-
           github.actor == 'dependabot[bot]' || github.actor ==
           'dependabot-preview[bot]'
-        with:
-          github-token: '${{ secrets.PAT_TOKEN }}'
   auto-merge:
     runs-on: ubuntu-latest
     steps:
-      - uses: ahmadnassri/action-dependabot-auto-merge@v1
+      - uses: ahmadnassri/action-dependabot-auto-merge@v2
         with:
           target: patch
           github-token: '${{ secrets.PAT_TOKEN }}'
