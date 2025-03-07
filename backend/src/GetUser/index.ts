@@ -95,9 +95,9 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
       JSON.stringify({
         userId: response.user_id,
         createdAt: response.created_at,
-        updated_at: response.updated_at,
+        updatedAt: response.updated_at,
         region: response.region,
-        forced_update: response.forced_update,
+        forcedUpdate: response.forced_update,
         authorized: authorized,
         characters: characterResponse,
       }),

@@ -52,13 +52,18 @@ export const profileApi = createApi({
         },
       }),
     }),
-    getForceUpdate: builder.query({
-      query: ({}) => ({
+    getForceUpdate: builder.mutation({
+      query: () => ({
         url: 'force-update',
         method: 'GET',
       }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        const { data } = await queryFulfilled;
+        dispatch(setProfile(data));
+      },
+      invalidatesTags: [{type: 'profile'}]
     }),
   }),
 });
 
-export const { useGetProfileQuery, useLazyGetGenerateSignedUrlQuery, useLazyGetForceUpdateQuery } = profileApi;
+export const { useGetProfileQuery, useLazyGetGenerateSignedUrlQuery, useGetForceUpdateMutation } = profileApi;

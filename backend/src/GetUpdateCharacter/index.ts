@@ -150,7 +150,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
 
   const processedCharacters = await Promise.all(allCharacters.map((character) => processCharacter(character, baseUrl)));
 
-  const validCharacters = processedCharacters.filter((character): character is DynamoCharacter => character !== null);
+  const validCharacters = processedCharacters.filter((character) => character !== null);
 
   const uniqueUserIds = Array.from(new Set(validCharacters.map((character) => character.user_id)));
 
@@ -171,7 +171,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     Put: {
       TableName: 'wow-extension-characters',
       Item: {
-        ...marshall(character, { removeUndefinedValues: true }),
+        ...marshall(character, { removeUndefinedValues: true }), // Items (as in gear) removed might be causing an issue.
         character_id: { N: character.character_id.toString() },
         realm: { N: character.realm.toString() },
         realm_name: { S: character.realm_name.toLowerCase() },
@@ -219,7 +219,36 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
       return ApiResult(500, JSON.stringify({ error: 'something went wrong' }));
     }
 
-    return ApiResult(200, JSON.stringify(unmarshall(Attributes)));
+    const attributes = unmarshall(Attributes) as ddbProfile;
+
+    const queryCharacterParams: QueryCommandInput = {
+      TableName: 'wow-extension-characters',
+      KeyConditionExpression: '#userId = :userId',
+      ExpressionAttributeNames: {
+        '#userId': 'user_id',
+      },
+      ExpressionAttributeValues: {
+        ':userId': { N: userId },
+      },
+      IndexName: 'user_id-index',
+    };
+
+    const { Items } = await ddbClient.send(new QueryCommand(queryCharacterParams));
+
+    const characters = Items?.map((item) => unmarshall(item)) ?? [];
+
+    return ApiResult(
+      200,
+      JSON.stringify({
+        userId: attributes.user_id,
+        createdAt: attributes.created_at,
+        updatedAt: attributes.updated_at,
+        region: attributes.region,
+        forcedUpdate: attributes.forced_update,
+        authorized: Math.floor(Date.now() / 1000) < attributes.expires_in,
+        characters: characters,
+      }),
+    );
   } catch (err) {
     console.log(`error: ${err}`);
     return ApiResult(500, JSON.stringify({ error: 'Something went wrong' }));

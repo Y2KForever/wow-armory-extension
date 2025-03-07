@@ -82,14 +82,16 @@ const ListView = ({ characters }: IListViewProps) => {
 export const Panel = () => {
   const twitchAuth = useContext(TwitchAuthContext);
   const isAuthLoading = !twitchAuth.authorized || !twitchAuth.channelId;
-  const [view, setView] = useState<IViewProps>({ view: Views.LIST, character: null });
-
   const {
     isLoading: isProfileLoading,
     error,
     data,
   } = useGetProfileQuery(undefined, {
     skip: isAuthLoading,
+  });
+  const [view, setView] = useState<IViewProps>({
+    view: Views.LIST,
+    character: null,
   });
 
   if (isProfileLoading) {

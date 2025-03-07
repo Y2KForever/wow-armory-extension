@@ -1,5 +1,5 @@
 import { injectLambdaContext } from '@aws-lambda-powertools/logger/middleware';
-import { captureLambdaHandler } from '@aws-lambda-powertools/tracer';
+import { captureLambdaHandler } from '@aws-lambda-powertools/tracer/middleware';
 import middy, { type MiddyfiedHandler } from '@middy/core';
 import errorLogger from '@middy/error-logger';
 import type { Handler } from 'aws-lambda';
