@@ -84,6 +84,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
               #st = :st,
               updated_at = :updated_at,
               expires_in = :expires_in,
+              forced_update = :forced_update,
               ${'created_at = if_not_exists(created_at, :created_at)'}
          `,
       ExpressionAttributeNames: {
@@ -94,6 +95,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
         ':expires_in': { N: (Math.floor(Date.now() / 1000) + respJSON.expires_in).toString() },
         ':updated_at': { S: now },
         ':created_at': { S: now },
+        ':forced_update': { S: now },
       },
     });
 

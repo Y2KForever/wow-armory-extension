@@ -543,7 +543,6 @@ Resources:
     Properties:
       Handler: src/GetTalents/index.handler
       Description: Fetches all talents
-      Timeout: 600
       Role: !GetAtt LambdaBasicRole.Arn
       Events:
         GetTalents:
@@ -553,6 +552,23 @@ Resources:
             Method: GET
             RestApiId:
               Ref: API
+
+  GetUpdateCharactersForUserFunction:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/GetUpdateCharacter/index.handler
+      Description: Updates all characters for a specific user
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetUpdateCharactersForUser:
+          Type: Api
+          Properties:
+            Path: /force-update
+            Method: GET
+            RestApiId:
+              Ref: API
+
 
 Outputs:
   LandingPageCloudFrontId:
