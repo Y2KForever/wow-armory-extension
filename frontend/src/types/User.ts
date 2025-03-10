@@ -7,6 +7,7 @@ export type User = {
   region: string;
   authorized: boolean;
   characters: ApiCharacter[];
+  forcedUpdate: string;
 };
 
 export enum Views {

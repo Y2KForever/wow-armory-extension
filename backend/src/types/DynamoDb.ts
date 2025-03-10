@@ -7,6 +7,7 @@ export type ddbProfile = {
   region: string;
   state: string;
   updated_at: string;
+  forced_update: string;
 };
 
 export type DynamoCharacter = {

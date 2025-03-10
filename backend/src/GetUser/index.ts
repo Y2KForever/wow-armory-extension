@@ -61,11 +61,12 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
 
   try {
     const { Item } = await ddbClient.send(getCommand);
-    const response = simplifyDynamoDBResponse(Item);
 
-    if (response === null) {
+    if (!Item) {
       return ApiResult(404, JSON.stringify({ error: 'User does not exist' }));
     }
+
+    const response = unmarshall(Item);
 
     const authorized = Math.floor(Date.now() / 1000) < response.expires_in;
 
@@ -89,15 +90,14 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
       return unmarshall(item);
     });
 
-    console.log('CharacterResponse: ', JSON.stringify(characterResponse));
-
     return ApiResult(
       200,
       JSON.stringify({
         userId: response.user_id,
         createdAt: response.created_at,
-        updated_at: response.updated_at,
+        updatedAt: response.updated_at,
         region: response.region,
+        forcedUpdate: response.forced_update,
         authorized: authorized,
         characters: characterResponse,
       }),
