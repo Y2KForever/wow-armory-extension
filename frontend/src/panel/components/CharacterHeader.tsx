@@ -4,7 +4,7 @@ import { IViewProps } from '../pages/Panel';
 import { CharacterIcon } from '@/assets/icons/CharacterIcon';
 import { Views } from '@/types/User';
 import { Star } from '@/assets/icons/Star';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Update } from '@/assets/icons/Update';
 import { Button } from '@/components/ui/button';
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -13,6 +13,7 @@ import { motion, useAnimation } from 'framer-motion';
 import { useCountdown } from '@/hooks/useCountdown';
 import { useAppSelect } from '@/store/store';
 import { selectSelectedProfile } from '@/store/selectors/selectProfile';
+import { useTwitchAuth } from '@/hooks/useTwitchAuth';
 
 interface IMenuHeaderProps {
   setView: React.Dispatch<React.SetStateAction<IViewProps>>;
@@ -21,6 +22,8 @@ interface IMenuHeaderProps {
 }
 
 export const MenuHeader = ({ setView, view, isTalentDisabled }: IMenuHeaderProps) => {
+  const twitchAuth = useTwitchAuth();
+  const isStreamer = useMemo(() => `U${twitchAuth.channelId}` === twitchAuth.userId, [twitchAuth]);
   const selectedUser = useAppSelect(selectSelectedProfile);
   const controls = useAnimation();
   const countdown = useCountdown(selectedUser?.forcedUpdate ?? '');
@@ -73,7 +76,7 @@ export const MenuHeader = ({ setView, view, isTalentDisabled }: IMenuHeaderProps
         >
           <Star className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
         </div>
-        {!countdown.invalid && (
+        {!countdown.invalid && isStreamer && (
           <div className="w-[24px] h-[24px] flex flex-col justify-center items-center ml-auto mr-1">
             <TooltipProvider delayDuration={0}>
               <Tooltip>
