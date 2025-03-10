@@ -7,6 +7,7 @@ import {
   CharacterSummary,
   ItemResponse,
   MediaResponse,
+  Slots,
   Talents,
   TokenResponse,
 } from '../types/BattleNet';
@@ -421,7 +422,12 @@ class BattleNetApi {
       });
 
       const itemsArray = await Promise.all(itemPromises);
-      const items: ApiItems = Object.assign({}, ...itemsArray);
+      const equippedItems = Object.assign({}, ...itemsArray);
+      const defaultSlots = Object.values(Slots).reduce((acc, slot) => {
+        acc[slot] = null;
+        return acc;
+      }, {} as Record<string, null>);
+      const items: ApiItems = { ...defaultSlots, ...equippedItems };
       return items;
     } catch (err) {
       console.error(`Failed to fetch character items:`, err);

@@ -171,7 +171,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     Put: {
       TableName: 'wow-extension-characters',
       Item: {
-        ...marshall(character, { removeUndefinedValues: true }), // Items (as in gear) removed might be causing an issue.
+        ...marshall(character, { removeUndefinedValues: true }),
         character_id: { N: character.character_id.toString() },
         realm: { N: character.realm.toString() },
         realm_name: { S: character.realm_name.toLowerCase() },
