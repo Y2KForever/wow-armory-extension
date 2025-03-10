@@ -215,3 +215,24 @@ export type Talents = {
     default_points?: number;
   };
 };
+
+export enum Slots {
+  HEAD = 'head',
+  NECK = 'neck',
+  SHOULDER = 'shoulder',
+  BACK = 'back',
+  CHEST = 'chest',
+  SHIRT = 'shirt',
+  TABARD = 'tabard',
+  WRIST = 'wrist',
+  HANDS = 'hands',
+  WAIST = 'waist',
+  LEGS = 'legs',
+  FEET = 'feet',
+  FINGER_1 = 'finger_1',
+  FINGER_2 = 'finger_2',
+  TRINKET_1 = 'trinket_1',
+  TRINKET_2 = 'trinket_2',
+  MAIN_HAND = 'main_hand',
+  OFF_HAND = 'off_hand',
+}
