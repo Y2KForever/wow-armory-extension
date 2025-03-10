@@ -18,8 +18,6 @@ import { RowSelectionState, Updater } from '@tanstack/react-table';
 import { WowCharacter } from '@/types/Characters';
 import { BlizzardButton } from '../components/BlizzardButton';
 import { BattleNet } from '@/assets/icons/BattleNet';
-import { QuestionMark } from '@/assets/icons/QuestionMark';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export const Config = () => {
   const characters = useAppSelect(selectSelectedCharacters);
@@ -215,18 +213,6 @@ export const Config = () => {
                 </>
               )}
             </div>
-            <TooltipProvider delayDuration={0}>
-              {data?.authorized && (
-                <Tooltip>
-                  <div className="fill-current flex items-end mt-20 ml-2 max-h-[24px]">
-                    <TooltipTrigger>
-                      <QuestionMark />
-                    </TooltipTrigger>
-                  </div>
-                  <TooltipContent>Classic is currently disabled, waiting on Blizzard to fix their API</TooltipContent>
-                </Tooltip>
-              )}
-            </TooltipProvider>
           </div>
           {data?.authorized && (characters.length > 0 || selectedCharacters.length > 0) && (
             <>
