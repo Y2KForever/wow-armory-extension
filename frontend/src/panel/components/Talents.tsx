@@ -1,6 +1,4 @@
-import { IViewProps } from '../pages/Panel';
 import { AnimatePresence, motion } from 'framer-motion';
-import { MenuHeader } from './CharacterHeader';
 import { useAppSelect } from '@/store/store';
 import { selectSelectedTalents } from '@/store/selectors/selectTalents';
 import { readableSpec, removeSpace } from '@/lib/utils';
@@ -14,8 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import SimpleBar from 'simplebar-react';
 
 interface ITalentsProps {
-  setView: React.Dispatch<React.SetStateAction<IViewProps>>;
-  view: IViewProps;
+  character: ApiCharacter;
 }
 
 function getAllTalents(talentEntries: Talent[]): UniqueTalent[] {
@@ -33,7 +30,7 @@ function getAllTalents(talentEntries: Talent[]): UniqueTalent[] {
           powercost: tooltip.spell_tooltip.power_cost,
           range: tooltip.spell_tooltip.range,
           talent_id: tooltip.spell_tooltip.talent.id,
-          rank: rank.rank
+          rank: rank.rank,
         };
 
         if (talentMap.has(key)) {
@@ -64,7 +61,7 @@ const copyLoadoutCode = async (character: ApiCharacter | null) => {
   }
 };
 
-export const Talents = ({ view, setView }: ITalentsProps) => {
+export const Talents = ({ character }: ITalentsProps) => {
   const [isCopiedVisible, setIsCopiedVisible] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
@@ -78,8 +75,8 @@ export const Talents = ({ view, setView }: ITalentsProps) => {
 
   const selectTalents = useAppSelect(selectSelectedTalents);
   const heroTalents = useMemo(
-    () => selectTalents?.hero_talents.find((hero) => hero.id === view.character?.talents.hero_id),
-    [selectTalents, view.character],
+    () => selectTalents?.hero_talents.find((hero) => hero.id === character?.talents.hero_id),
+    [selectTalents, character],
   );
 
   if (!heroTalents) {
@@ -97,7 +94,6 @@ export const Talents = ({ view, setView }: ITalentsProps) => {
 
   return (
     <div key={'item'} className="flex flex-col flex-1 justify-center w-full h-full no-scrollbar">
-      <MenuHeader setView={setView} view={view} isTalentDisabled={false} />
       <motion.div
         className="no-scrollbar"
         initial={{ opacity: 0 }}
@@ -127,9 +123,9 @@ export const Talents = ({ view, setView }: ITalentsProps) => {
                   <TooltipContent side="left">Copy loadout code</TooltipContent>
                   <TooltipTrigger asChild>
                     <Button
-                      className='group hover:bg-transparent bg-transparent'
+                      className="group hover:bg-transparent bg-transparent"
                       onClick={() => {
-                        copyLoadoutCode(view.character);
+                        copyLoadoutCode(character);
                         setIsCopiedVisible(true);
                         if (timeoutRef.current) clearTimeout(timeoutRef.current);
                         timeoutRef.current = setTimeout(() => {
@@ -161,19 +157,19 @@ export const Talents = ({ view, setView }: ITalentsProps) => {
                 style={{ backgroundImage: `url(https://cdn.y2kforever.com/hero_talents/border.png)` }}
               />
             </div>
-            <TalentGroup talents={allHeroTalents} type={TalentType.HERO} view={view} />
+            <TalentGroup talents={allHeroTalents} type={TalentType.HERO} character={character} />
           </div>
           <Separator className="bg-white/15 mt-4" />
           <div className="mt-3 items-center flex flex-col">
             <p className="text-blizzard-yellow mb-2">
               {selectTalents?.spec ? readableSpec(selectTalents.spec) : undefined}
             </p>
-            <TalentGroup talents={allSpecTalents} type={TalentType.SPEC} view={view} />
+            <TalentGroup talents={allSpecTalents} type={TalentType.SPEC} character={character} />
           </div>
           <Separator className="bg-white/15 mt-4" />
           <div className="items-center flex flex-col mb-3">
             <p className={`text-class-${removeSpace(selectTalents?.class ?? '')} mt-2 mb-2`}>{selectTalents?.class}</p>
-            <TalentGroup talents={allClassTalents} type={TalentType.CLASS} view={view} />
+            <TalentGroup talents={allClassTalents} type={TalentType.CLASS} character={character} />
           </div>
         </SimpleBar>
       </motion.div>

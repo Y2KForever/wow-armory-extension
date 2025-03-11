@@ -1,6 +1,5 @@
 import { DoubleArrowLeft } from '@/assets/icons/DoubleArrowLeft';
 import { Separator } from '@/components/ui/separator';
-import { IViewProps } from '../pages/Panel';
 import { CharacterIcon } from '@/assets/icons/CharacterIcon';
 import { Views } from '@/types/User';
 import { Star } from '@/assets/icons/Star';
@@ -14,20 +13,36 @@ import { useCountdown } from '@/hooks/useCountdown';
 import { useAppSelect } from '@/store/store';
 import { selectSelectedProfile } from '@/store/selectors/selectProfile';
 import { useTwitchAuth } from '@/hooks/useTwitchAuth';
+import { useFetchTalentsQuery } from '@/store/api/characters';
+import { ApiCharacter } from '@/types/Characters';
+import { toUnderscores } from '@/lib/utils';
 
 interface IMenuHeaderProps {
-  setView: React.Dispatch<React.SetStateAction<IViewProps>>;
-  view: IViewProps;
-  isTalentDisabled: boolean;
+  setView: React.Dispatch<React.SetStateAction<Views>>;
+  view: Views;
+  selectedCharacter: ApiCharacter | null;
 }
 
-export const MenuHeader = ({ setView, view, isTalentDisabled }: IMenuHeaderProps) => {
+export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProps) => {
+  if (!selectedCharacter) return null;
+
   const twitchAuth = useTwitchAuth();
   const isStreamer = useMemo(() => `U${twitchAuth.channelId}` === twitchAuth.userId, [twitchAuth]);
   const selectedUser = useAppSelect(selectSelectedProfile);
   const controls = useAnimation();
   const countdown = useCountdown(selectedUser?.forcedUpdate ?? '');
   const [getForceUpdate, { isLoading: isLoadingforceUpdate }] = useGetForceUpdateMutation();
+  const classSpec = `${selectedCharacter?.spec.toLowerCase()}-${toUnderscores(selectedCharacter?.class.toLowerCase())}`;
+
+  const { isLoading: isTalentsLoading } = useFetchTalentsQuery(
+    {
+      spec: classSpec,
+      character: selectedCharacter,
+    },
+    {
+      skip: !selectedCharacter,
+    },
+  );
 
   useEffect(() => {
     if (isLoadingforceUpdate) {
@@ -56,23 +71,24 @@ export const MenuHeader = ({ setView, view, isTalentDisabled }: IMenuHeaderProps
   return (
     <div className="flex flex-col w-full">
       <div className="flex flex-row w-full h-[32px] items-center bg-backgroundBlizzard-light space-between">
-        <div
-          className="w-[28px] flex flex-col justify-center"
-          onClick={() => setView({ view: Views.LIST, character: null })}
-        >
+        <div className="w-[28px] flex flex-col justify-center" onClick={() => setView(Views.LIST)}>
           <DoubleArrowLeft width={24} height={24} className="stroke-white hover:cursor-pointer" />
         </div>
         <div
-          data-active={`${view.view === Views.ITEM ? true : false}`}
+          data-active={`${view === Views.CHARACTER ? true : false}`}
           className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-indigo-500`}
-          onClick={() => setView({ view: Views.ITEM, character: view.character })}
+          onClick={() => setView(Views.CHARACTER)}
         >
           <CharacterIcon className="fill-white hover:cursor-pointer hover:fill-indigo-500" />
         </div>
         <div
-          data-active={`${view.view === Views.TALENTS ? true : false}`}
+          data-active={`${view === Views.TALENTS ? true : false}`}
           className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-yellow-500`}
-          onClick={() => (!isTalentDisabled ? setView({ view: Views.TALENTS, character: view.character }) : undefined)}
+          onClick={() => {
+            if (!isTalentsLoading && selectedCharacter) {
+              setView(Views.TALENTS);
+            }
+          }}
         >
           <Star className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
         </div>
