@@ -5,7 +5,7 @@ import { Capitalize } from '@/lib/utils';
 const namespacesOption = Object.entries(Namespaces).map(([key, value]) => ({
   label: Capitalize(value),
   value: key,
-  disable: value === 'retail' ? false : true,
+  disable: false,
 }));
 
 interface NamespaceSelectProps {
