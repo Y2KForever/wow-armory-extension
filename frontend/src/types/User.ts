@@ -12,6 +12,6 @@ export type User = {
 
 export enum Views {
   LIST = 'list',
-  ITEM = 'item',
+  CHARACTER = 'character',
   TALENTS = 'talents',
 }

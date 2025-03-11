@@ -1,22 +1,21 @@
 import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { TalentType, UniqueTalent } from '@/types/Characters';
-import { IViewProps } from '../pages/Panel';
+import { ApiCharacter, TalentType, UniqueTalent } from '@/types/Characters';
 
 interface ITalentGroupProps {
   talents: UniqueTalent[];
-  view: IViewProps;
+  character: ApiCharacter;
   type: TalentType;
 }
 
-export const TalentGroup = ({ talents, view, type }: ITalentGroupProps) => {
+export const TalentGroup = ({ talents, character, type }: ITalentGroupProps) => {
   return (
     <div className="flex flex-col items-center w-full h-full">
       <div className="grid max-w-[290px] p-3 rounded-md bg-black justify-center">
         <TooltipProvider delayDuration={0}>
           {talents.map((talentGroup, idx) => {
             const speccedSpells = talentGroup.spells.filter((spell) =>
-              view.character?.talents[`${type}_talents`].includes(spell.talent_id),
+              character?.talents[`${type}_talents`].includes(spell.talent_id),
             );
 
             return (

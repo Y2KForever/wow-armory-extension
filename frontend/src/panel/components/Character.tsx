@@ -1,38 +1,16 @@
 import { motion } from 'framer-motion';
-import { IViewProps } from '../pages/Panel';
-import { MenuHeader } from './CharacterHeader';
 import { CharacterItem } from './CharacterItem';
 import { ApiCharacter, slotsOrderBottom, slotsOrderLeft, slotsOrderRight } from '@/types/Characters';
-import { removeSpace, toUnderscores } from '@/lib/utils';
+import { removeSpace } from '@/lib/utils';
 import { ItemLevel } from '@/assets/icons/ItemLevel';
-import { useFetchTalentsQuery } from '@/store/api/characters';
-import { useAppSelect } from '@/store/store';
-import { selectSelectedTalents } from '@/store/selectors/selectTalents';
 
 interface ICharacterProps {
-  setView: React.Dispatch<React.SetStateAction<IViewProps>>;
   character: ApiCharacter;
-  view: IViewProps;
 }
 
-export const Character = ({ setView, character, view }: ICharacterProps) => {
-  const selectTalents = useAppSelect(selectSelectedTalents);
-  const classSpec = `${character.spec.toLowerCase()}-${toUnderscores(character.class.toLowerCase())}`;
-  const { isError: talentError, isLoading: talentLoading } = useFetchTalentsQuery(
-    {
-      spec: `${classSpec}`,
-      character: character,
-    },
-    {
-      skip: selectTalents?.spec === classSpec,
-    },
-  );
-
-  const isTalentsDisabled = talentError || talentLoading;
-
+export const Character = ({ character }: ICharacterProps) => {
   return (
     <div key={'item'} className="flex flex-col flex-1 justify-center w-full">
-      <MenuHeader setView={setView} view={view} isTalentDisabled={isTalentsDisabled} />
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
