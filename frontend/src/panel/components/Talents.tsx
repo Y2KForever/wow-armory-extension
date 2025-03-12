@@ -29,7 +29,7 @@ function getAllTalents(talentEntries: Talent[]): UniqueTalent[] {
           cooldown: tooltip.spell_tooltip.cooldown,
           powercost: tooltip.spell_tooltip.power_cost,
           range: tooltip.spell_tooltip.range,
-          talent_id: tooltip.spell_tooltip.talent.id,
+          talent_id: tooltip.spell_tooltip.talent?.id || null,
           rank: rank.rank,
         };
 
@@ -56,7 +56,7 @@ function getAllTalents(talentEntries: Talent[]): UniqueTalent[] {
 }
 
 const copyLoadoutCode = async (character: ApiCharacter | null) => {
-  if (character) {
+  if (character && character.talents?.loadout_code) {
     await navigator.clipboard.writeText(character.talents.loadout_code);
   }
 };
@@ -75,13 +75,9 @@ export const Talents = ({ character }: ITalentsProps) => {
 
   const selectTalents = useAppSelect(selectSelectedTalents);
   const heroTalents = useMemo(
-    () => selectTalents?.hero_talents.find((hero) => hero.id === character?.talents.hero_id),
+    () => selectTalents?.hero_talents.find((hero) => hero.id === character?.talents?.hero_id),
     [selectTalents, character],
   );
-
-  if (!heroTalents) {
-    return <></>;
-  }
 
   const allSpecTalents = useMemo(() => getAllTalents(selectTalents?.spec_talents ?? []), [selectTalents?.spec_talents]);
 
@@ -90,7 +86,7 @@ export const Talents = ({ character }: ITalentsProps) => {
     [selectTalents?.class_talents],
   );
 
-  const allHeroTalents = useMemo(() => getAllTalents(heroTalents.talents ?? []), [heroTalents.talents]);
+  const allHeroTalents = useMemo(() => getAllTalents(heroTalents?.talents ?? []), [heroTalents?.talents]);
 
   return (
     <div key={'item'} className="flex flex-col flex-1 justify-center w-full h-full no-scrollbar">
@@ -141,23 +137,29 @@ export const Talents = ({ character }: ITalentsProps) => {
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <Separator className="bg-white/15" />
-            <p className="text-blizzard-yellow m-2">{heroTalents.name}</p>
-            <div className="relative w-[38px] h-[38px] mb-2">
-              <div
-                className="w-[32px] h-[32px] absolute bg-center bg-no-repeat bg-contain top-[3px] left-[3px]"
-                style={{
-                  backgroundImage: `url(https://cdn.y2kforever.com/hero_talents/${removeSpace(
-                    heroTalents.name.toLowerCase(),
-                  )}.webp)`,
-                }}
-              />
-              <div
-                className="w-[38px] h-[38px] absolute"
-                style={{ backgroundImage: `url(https://cdn.y2kforever.com/hero_talents/border.png)` }}
-              />
-            </div>
-            <TalentGroup talents={allHeroTalents} type={TalentType.HERO} character={character} />
+            {heroTalents && (
+              <>
+                <Separator className="bg-white/15" />
+                <p className="text-blizzard-yellow m-2">{heroTalents?.name}</p>
+                <div className="relative w-[38px] h-[38px] mb-2">
+                  {heroTalents?.name && (
+                    <div
+                      className="w-[32px] h-[32px] absolute bg-center bg-no-repeat bg-contain top-[3px] left-[3px]"
+                      style={{
+                        backgroundImage: `url(https://cdn.y2kforever.com/hero_talents/${removeSpace(
+                          heroTalents.name.toLowerCase(),
+                        )}.webp)`,
+                      }}
+                    />
+                  )}
+                  <div
+                    className="w-[38px] h-[38px] absolute"
+                    style={{ backgroundImage: `url(https://cdn.y2kforever.com/hero_talents/border.png)` }}
+                  />
+                </div>
+                <TalentGroup talents={allHeroTalents} type={TalentType.HERO} character={character} />
+              </>
+            )}
           </div>
           <Separator className="bg-white/15 mt-4" />
           <div className="mt-3 items-center flex flex-col">

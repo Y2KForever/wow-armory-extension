@@ -9,13 +9,14 @@ interface ITalentGroupProps {
 }
 
 export const TalentGroup = ({ talents, character, type }: ITalentGroupProps) => {
+  console.log('tal', talents);
   return (
     <div className="flex flex-col items-center w-full h-full">
       <div className="grid max-w-[290px] p-3 rounded-md bg-black justify-center">
         <TooltipProvider delayDuration={0}>
           {talents.map((talentGroup, idx) => {
             const speccedSpells = talentGroup.spells.filter((spell) =>
-              character?.talents[`${type}_talents`].includes(spell.talent_id),
+              character?.talents[`${type}_talents`].includes(spell.talent_id || 0),
             );
 
             return (

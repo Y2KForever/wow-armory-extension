@@ -60,10 +60,13 @@ type ApiCharacter = {
   spec: string;
   title: string;
   name: string;
+  namespace: string;
   level: number;
   character_id: number;
   race: string;
   equip_item_level: number;
+  dead: boolean | null;
+  self_found: boolean | null;
   talents: {
     class_talents: number[];
     hero_id: number;
@@ -91,6 +94,7 @@ type ApiCharacter = {
       value: string;
       color: string;
       is_equpped_bonus: boolean;
+      display_string?: string;
     }[];
     spells?:
       | {
@@ -112,7 +116,7 @@ type ApiCharacter = {
       }[];
     } | null;
     requirement: string | null;
-    level: number;
+    level: number | null;
     transmog: string | null;
     enchantments: string[] | null;
   };
@@ -159,7 +163,7 @@ type SpellTooltip = {
   cooldown?: string;
   range?: string;
   power_cost?: string;
-  talent: {
+  talent?: {
     name: string;
     key: {
       href: string;
@@ -223,8 +227,8 @@ interface UniqueTalent {
     cooldown?: string;
     powercost?: string;
     range?: string;
-    talent_id: number;
-    rank: number
+    talent_id: number | null;
+    rank: number;
   }[];
 }
 

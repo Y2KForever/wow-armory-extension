@@ -9,6 +9,7 @@ interface ICharacterProps {
 }
 
 export const Character = ({ character }: ICharacterProps) => {
+  console.log('char', character);
   return (
     <div key={'item'} className="flex flex-col flex-1 justify-center w-full">
       <motion.div
@@ -30,22 +31,35 @@ export const Character = ({ character }: ICharacterProps) => {
           <div
             style={{
               backgroundSize: '400%',
-              backgroundImage: `url(https://cdn.y2kforever.com/characters/${character.character_id}-main-raw.png)`,
+              backgroundImage: `url(https://cdn.y2kforever.com/characters/${character['main-raw']})`,
             }}
             className={`flex flex-row flex-1 w-full h-full bg-center`}
           >
             <div className="w-full flex flex-col items-center flex-1 h-full">
               <div className="flex flex-col items-center text-blizzard-yellow font-sans">
                 <p className={`text-base text-class-${removeSpace(character.class)}`}>{character.name}</p>
-
                 <p className="text-xs text-white">
                   {character.level} {character.race} {character.class}
                 </p>
+                {character.self_found && <p className="text-xs text-white">Self-found</p>}
                 <div className="flex items-center">
                   <ItemLevel width={16} height={16} className="fill-blizzard-yellow" />
                   <p className="ml-1 text-sm">{`${character.equip_item_level} ILVL`}</p>
                 </div>
               </div>
+
+              {character.namespace !== 'retail' && (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <img
+                    className="rounded border border-black"
+                    src={
+                      character.dead
+                        ? `https://cdn.y2kforever.com/characters/dead.jpg`
+                        : `https://cdn.y2kforever.com/characters/${character.avatar}`
+                    }
+                  />
+                </div>
+              )}
               <div className="flex mt-auto flex-row items-end align-between ml-auto mr-auto">
                 {Object.values(slotsOrderBottom).map((slot, idx) => (
                   <CharacterItem
