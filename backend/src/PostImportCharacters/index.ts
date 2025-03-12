@@ -2,11 +2,17 @@ import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { ApiResult, authorizeUser, chunkArray, omit, verifyJwt } from '../utils/utils';
 import { getTwitchExtensionSecret } from '../utils/secretsManager';
 import { PostImportCharactersBody } from '../types/Api';
-import { DynamoDBClient, TransactWriteItemsCommand, TransactWriteItemsInput } from '@aws-sdk/client-dynamodb';
+import {
+  DynamoDBClient,
+  GetItemCommand,
+  TransactWriteItemsCommand,
+  TransactWriteItemsInput,
+} from '@aws-sdk/client-dynamodb';
 
-import { marshall } from '@aws-sdk/util-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { middyCore } from '../utils/middyWrapper';
 import BattleNetApi from '../BattleNetApi';
+import { ddbProfile } from '../types/DynamoDb';
 
 const requiredHeaders = ['x-token', 'x-user-id'];
 
@@ -43,18 +49,43 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
 
   const chunks = chunkArray(body.characters, 100);
 
+  const getUserCommand = new GetItemCommand({
+    TableName: 'wow-extension-profiles',
+    Key: {
+      user_id: { N: userId },
+    },
+  });
+
+  const { Item } = await ddbClient.send(getUserCommand);
+
+  if (!Item) {
+    return ApiResult(400, JSON.stringify(`Failed to fetch user`));
+  }
+
+  const user = unmarshall(Item) as ddbProfile;
+
+  console.log('token', user.state);
+
   for (const chunk of chunks) {
     const enrichedCharacter = await Promise.all(
       chunk.map(async (character) => {
         try {
-          const isValid = await BattleNetApiManager.fetchCharacterStatus(character, body.region, baseUrl);
+          const isValid = await BattleNetApiManager.fetchCharacterStatus(character, body.region, baseUrl, user.state);
           if (!isValid) {
             return { ...character, ...{ is_valid: false } };
           }
-          const mediaData = await BattleNetApiManager.fetchCharacterMedia(character, body.region, baseUrl);
-          const items = await BattleNetApiManager.fetchCharacterItems(character, body.region, baseUrl);
-          const summary = await BattleNetApiManager.fetchCharacterSummary(character, body.region, baseUrl);
-          const talents = await BattleNetApiManager.fetchCharacterSpecializations(character, body.region, baseUrl);
+          const mediaData = await BattleNetApiManager.fetchCharacterMedia(character, body.region, baseUrl, user.state);
+          const items = await BattleNetApiManager.fetchCharacterItems(character, body.region, baseUrl, user.state);
+          const summary = await BattleNetApiManager.fetchCharacterSummary(character, body.region, baseUrl, user.state);
+          let talents;
+          if (character.namespace === 'retail') {
+            talents = await BattleNetApiManager.fetchCharacterSpecializations(
+              character,
+              body.region,
+              baseUrl,
+              user.state,
+            );
+          }
           return { ...character, ...mediaData, ...items, ...summary, ...isValid, ...talents };
         } catch (err) {
           console.log(err);

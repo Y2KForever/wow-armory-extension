@@ -2,8 +2,10 @@ import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { ApiResult, authorizeUser, simplifyDynamoDBResponse } from '../utils/utils';
 import { middyCore } from '../utils/middyWrapper';
 import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
-import { ApiCharacter, PostFetchCharacters } from '../types/Api';
+import { PostFetchCharacters } from '../types/Api';
 import BattleNetApi from '../BattleNetApi';
+import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { ddbProfile } from '../types/DynamoDb';
 
 const ddbClient = new DynamoDBClient({});
 
@@ -59,7 +61,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
 
   const battleNetApiManager = BattleNetApi.getInstance();
 
-  const simplifiedResponse = simplifyDynamoDBResponse(Item);
+  const user = unmarshall(Item) as ddbProfile;
 
   try {
     const namespacePromises = jsonBody.namespaces.map(async (namespace) => {
@@ -67,7 +69,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
         jsonBody.region,
         apiBaseUrl,
         namespace,
-        simplifiedResponse.state,
+        user.state,
       );
 
       const allCharacters = resp.wow_accounts.flatMap((account) => account.characters);
@@ -85,7 +87,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
       }));
 
       const statusPromises = apiCharacter.map(async (char) =>
-        battleNetApiManager.fetchCharacterStatus(char, jsonBody.region, apiBaseUrl),
+        battleNetApiManager.fetchCharacterStatus(char, jsonBody.region, apiBaseUrl, user.state),
       );
       const statuses = await Promise.all(statusPromises);
 

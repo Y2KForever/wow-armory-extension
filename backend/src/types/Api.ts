@@ -63,6 +63,7 @@ type CharacterItem = {
     name: string;
     value: number;
     color: string;
+    display_string?: string;
     is_equipped_bonus: boolean;
   }[];
   spells:
@@ -88,6 +89,8 @@ export type ApiCharacterSummary = {
   guild_name: string | null;
   guild_id: number | null;
   last_login: number;
+  dead: boolean | null;
+  self_found: boolean | null;
 };
 
 export type ApiCharacterStatus = {
