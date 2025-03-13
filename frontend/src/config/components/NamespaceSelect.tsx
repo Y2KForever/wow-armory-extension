@@ -5,7 +5,7 @@ import { Capitalize } from '@/lib/utils';
 const namespacesOption = Object.entries(Namespaces).map(([key, value]) => ({
   label: Capitalize(value),
   value: key,
-  disable: false,
+  disable: value === 'retail' ? false : true,
 }));
 
 interface NamespaceSelectProps {
@@ -14,12 +14,11 @@ interface NamespaceSelectProps {
   isDisabled: boolean;
 }
 
-export const NamespaceSelect = ({ onValueChange, isDisabled }: NamespaceSelectProps) => {
+export const NamespaceSelect = ({ onValueChange }: NamespaceSelectProps) => {
   return (
     <div className="flex max-w-[285px]">
       <MultipleSelector
         onChange={onValueChange}
-        disabled={isDisabled}
         hidePlaceholderWhenSelected
         className="bg-background"
         defaultOptions={namespacesOption}

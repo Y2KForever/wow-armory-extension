@@ -15,11 +15,18 @@ import { marshall } from '@aws-sdk/util-dynamodb';
 import { middyCore } from '../utils/middyWrapper';
 import BattleNetApi from '../BattleNetApi';
 import { ddbProfile, DynamoCharacter } from '../types/DynamoDb';
+import { getClientCredentials } from '../utils/secretsManager';
+import { ClientCredentials } from '../types/SecretManager';
+import { TokenResponse } from '../types/BattleNet';
 
 const ddbClient = new DynamoDBClient();
 const BattleNetApiManager = BattleNetApi.getInstance();
 
-const processCharacter = async (character: DynamoCharacter, baseUrl: string): Promise<DynamoCharacter | null> => {
+const processCharacter = async (
+  character: DynamoCharacter,
+  baseUrl: string,
+  token: any,
+): Promise<DynamoCharacter | null> => {
   const apiChar: ApiCharacter = {
     class: character.class,
     faction: character.faction,
@@ -36,7 +43,7 @@ const processCharacter = async (character: DynamoCharacter, baseUrl: string): Pr
   };
 
   try {
-    const isValid = await BattleNetApiManager.fetchCharacterStatus(apiChar, character.region, baseUrl);
+    const isValid = await BattleNetApiManager.fetchCharacterStatus(apiChar, character.region, baseUrl, token);
 
     if (!isValid) {
       const deleteParams: DeleteItemCommandInput = {
@@ -50,10 +57,10 @@ const processCharacter = async (character: DynamoCharacter, baseUrl: string): Pr
     }
 
     const [mediaData, items, summary, talents] = await Promise.all([
-      BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl),
-      BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl),
-      BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl),
-      BattleNetApiManager.fetchCharacterSpecializations(apiChar, character.region, baseUrl),
+      BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterSpecializations(apiChar, character.region, baseUrl, token),
     ]);
 
     return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents };
@@ -84,9 +91,29 @@ const getCharactersForUser = async (userId: number): Promise<DynamoCharacter[]> 
 
 const lambdaHandler = async (): Promise<void> => {
   const baseUrl = process.env['API_BASE_URL'];
+  const secret = process.env['CLIENT_CREDENTAILS_SECRET'];
   if (!baseUrl) {
     throw new Error(`BaseURL not set.`);
   }
+
+  if (!secret) {
+    throw new Error(`CLIENT_CREDENTAILS_SECRET not set.`);
+  }
+
+  const clientSecret = await getClientCredentials();
+
+  const buffer = Buffer.from(`${clientSecret.client_id}:${clientSecret.client_secret}`).toString('base64');
+
+  const tokenFetch = await fetch(`https://oauth.battle.net/token`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${buffer}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials',
+  });
+
+  const token = (await tokenFetch.json()) as TokenResponse;
 
   const scanParams: ScanCommandInput = {
     TableName: 'wow-extension-profiles',
@@ -111,7 +138,9 @@ const lambdaHandler = async (): Promise<void> => {
     throw new Error(`No characters found.`);
   }
 
-  const processedCharacters = await Promise.all(allCharacters.map((character) => processCharacter(character, baseUrl)));
+  const processedCharacters = await Promise.all(
+    allCharacters.map((character) => processCharacter(character, baseUrl, token.access_token)),
+  );
 
   const validCharacters = processedCharacters.filter((character): character is DynamoCharacter => character !== null);
 

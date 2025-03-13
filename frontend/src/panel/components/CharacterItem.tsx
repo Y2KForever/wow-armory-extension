@@ -32,7 +32,7 @@ export const CharacterItem = ({ character, type, className, tooltipSide }: IChar
             </TooltipTrigger>
             <TooltipContent side={tooltipSide} className="text-xs max-w-[230px] pt-3 pb-3 bg-primary/95">
               <p className={`text-rarity-${currentItem.quality?.toLowerCase()}`}>{currentItem.name}</p>
-              <p className="text-blizzard-yellow">Item level {currentItem.level}</p>
+              {currentItem.level && <p className="text-blizzard-yellow">Item level {currentItem.level}</p>}
               {currentItem.transmog && (
                 <div className="">
                   <p className="text-blizzard-transmog">Transmogified to:</p>
@@ -42,7 +42,7 @@ export const CharacterItem = ({ character, type, className, tooltipSide }: IChar
               <div className="mt-2 mb-2">
                 {currentItem.stats?.map((stat, idx) => (
                   <p className="text-xs" key={`stat-${idx}`} style={{ color: stat.color }}>
-                    +{stat.value} {stat.name}
+                    {character.namespace === 'retail' ? `+${stat.value} ${stat.name}` : `${stat.display_string}`}
                   </p>
                 ))}
               </div>
