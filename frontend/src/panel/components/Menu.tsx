@@ -33,7 +33,7 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
   const controls = useAnimation();
   const countdown = useCountdown(selectedUser?.forcedUpdate ?? '');
   const [getForceUpdate, { isLoading: isLoadingforceUpdate }] = useGetForceUpdateMutation();
-  const classSpec = `${selectedCharacter?.spec.toLowerCase()}-${toUnderscores(selectedCharacter?.class.toLowerCase())}`;
+  const classSpec = `${selectedCharacter?.spec?.toLowerCase()}-${toUnderscores(selectedCharacter?.class.toLowerCase())}`;
 
   const { isLoading: isTalentsLoading } = useFetchTalentsQuery(
     {
@@ -82,17 +82,19 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
         >
           <CharacterIcon className="fill-white hover:cursor-pointer hover:fill-indigo-500" />
         </div>
-        <div
-          data-active={`${view === Views.TALENTS ? true : false}`}
-          className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-yellow-500`}
-          onClick={() => {
-            if (!isTalentsLoading && selectedCharacter) {
-              setView(Views.TALENTS);
-            }
-          }}
-        >
-          <Star className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
-        </div>
+        {selectedCharacter.namespace === 'retail' && (
+          <div
+            data-active={`${view === Views.TALENTS ? true : false}`}
+            className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-yellow-500`}
+            onClick={() => {
+              if (!isTalentsLoading && selectedCharacter) {
+                setView(Views.TALENTS);
+              }
+            }}
+          >
+            <Star className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
+          </div>
+        )}
         <div
           data-active={`${view === Views.RAIDS ? true : false}`}
           className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-yellow-500`}

@@ -2,6 +2,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { ApiCharacter, ApiCharacterStatus, ApiCharacterSummary, ApiCharacterTalents, ApiItems } from '../types/Api';
 import {
   CharacterSpecializations,
+  CharacterSpecializationsClassic,
   CharactersResponse,
   CharacterStatus,
   CharacterSummary,
@@ -11,14 +12,10 @@ import {
   Talents,
   TokenResponse,
 } from '../types/BattleNet';
-import { getClientCredentials } from '../utils/secretsManager';
 import { checkIfImageExist, downloadImage, rgbaToHex, toDashes, uploadImage } from '../utils/utils';
 
 class BattleNetApi {
   private static instance: BattleNetApi;
-  private accessToken: string | null = null;
-  private expiryTime: number | null = null;
-  private fetchingPromise: Promise<string> | null = null;
   private static s3Client: S3Client;
 
   private constructor() {}
@@ -45,7 +42,7 @@ class BattleNetApi {
   }
 
   private getNamespace(character: ApiCharacter, region: string): string {
-    return character.namespace === 'retail' ? `profile-${region}` : `${character.namespace}-${region}`;
+    return character.namespace === 'retail' ? `profile-${region}` : `profile-${character.namespace}-${region}`;
   }
 
   private getActiveLoadout(data: CharacterSpecializations) {
@@ -60,10 +57,9 @@ class BattleNetApi {
     url: string,
     method: 'GET' | 'POST' = 'GET',
     locale: boolean,
+    token: string,
     namespace?: string,
   ): Promise<Response> {
-    const token = await this.getAccessToken();
-
     const headers: Record<string, string> = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -82,35 +78,13 @@ class BattleNetApi {
     });
 
     if (!response.ok) {
+      console.log(`Token: `, token);
+      console.log('resp', await response.text());
+      console.log('namespace', namespace);
       throw new Error(`API request failed: ${response.statusText}`);
     }
 
     return response;
-  }
-
-  private async fetchNewToken(): Promise<string> {
-    const clientCredentialsSecret = await getClientCredentials();
-    const response = await fetch('https://oauth.battle.net/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: clientCredentialsSecret.client_id,
-        client_secret: clientCredentialsSecret.client_secret,
-        grant_type: 'client_credentials',
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch API token');
-    }
-
-    const data = (await response.json()) as TokenResponse;
-    this.accessToken = data.access_token;
-    this.expiryTime = Date.now() + data.expires_in * 1000;
-    this.fetchingPromise = null;
-    return this.accessToken;
   }
 
   private async processMediaAssets(
@@ -135,12 +109,18 @@ class BattleNetApi {
     }, {} as Record<string, string>);
   }
 
-  private async fetchItemMedia(region: string, baseUrl: string, itemId: number): Promise<MediaResponse | null> {
+  private async fetchItemMedia(
+    region: string,
+    baseUrl: string,
+    itemId: number,
+    token: string,
+  ): Promise<MediaResponse | null> {
     try {
       const response = await this.makeRequest(
         `https://${region}.${baseUrl}/data/wow/media/item/${itemId}`,
         'GET',
         true,
+        token,
         `static-${region}`,
       );
       return (await response.json()) as MediaResponse;
@@ -153,6 +133,7 @@ class BattleNetApi {
   private async processSockets(
     sockets: any[] | undefined,
     itemId: number,
+    token: string,
   ): Promise<
     Array<{
       type: string;
@@ -167,7 +148,7 @@ class BattleNetApi {
         const socketMediaUrl = socket.media?.key.href;
         let processedImage: string | undefined = undefined;
         if (socketMediaUrl) {
-          const socketImagesResp = await this.makeRequest(socket.media.key.href, 'GET', false);
+          const socketImagesResp = await this.makeRequest(socket.media.key.href, 'GET', false, token);
           const socketJSON = (await socketImagesResp.json()) as MediaResponse;
           if (socketJSON.assets?.length) {
             const socketImage = socketJSON.assets[0];
@@ -199,28 +180,15 @@ class BattleNetApi {
     return filename;
   }
 
-  public async getAccessToken(): Promise<string> {
-    if (this.accessToken && this.expiryTime && Date.now() < this.expiryTime) {
-      return this.accessToken;
-    }
-
-    if (!this.fetchingPromise) {
-      this.fetchingPromise = this.fetchNewToken();
-    }
-
-    return this.fetchingPromise;
-  }
-
   public async fetchCharacters(region: string, baseUrl: string, namespace: string, token: string) {
-    const response = await fetch(`https://${region}.${baseUrl}/profile/user/wow?locale=en_US`, {
+    const response = await fetch(`https://${baseUrl}/profile/user/wow?locale=en_US`, {
+      method: 'GET',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token.trim()}`,
         'Battlenet-Namespace': namespace === 'retail' ? `profile-${region}` : `profile-${namespace}-${region}`,
       },
     });
     if (!response.ok) {
-      const resp = await response.text();
-      console.log('resp', resp);
       throw new Error(`Error from Battle.net API for namespace: ${namespace}`);
     }
 
@@ -231,11 +199,11 @@ class BattleNetApi {
     character: ApiCharacter,
     region: string,
     baseUrl: string,
+    token: string,
   ): Promise<Record<string, string>> {
     try {
       const url = this.buildCharacterUrl(character, region, baseUrl, 'character-media');
-      const namespace = this.getNamespace(character, region);
-      const resp = await this.makeRequest(url, 'GET', true, namespace);
+      const resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
       const data = (await resp.json()) as MediaResponse;
       const client = BattleNetApi.getS3Client();
 
@@ -255,13 +223,16 @@ class BattleNetApi {
     character: ApiCharacter,
     region: string,
     baseUrl: string,
+    token: string,
   ): Promise<ApiCharacterStatus> {
     const url = this.buildCharacterUrl(character, region, baseUrl, 'status');
     let resp: Response;
 
     try {
-      resp = await this.makeRequest(url, 'GET', true, this.getNamespace(character, region));
+      resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
     } catch (err: any) {
+      console.log('char', JSON.stringify(character));
+      console.log('err', err);
       if (
         err?.status === 404 ||
         (err?.message && err.message.includes('404')) ||
@@ -286,10 +257,12 @@ class BattleNetApi {
     character: ApiCharacter,
     region: string,
     baseUrl: string,
+    token: string,
   ): Promise<ApiCharacterTalents> {
     try {
       const url = this.buildCharacterUrl(character, region, baseUrl, 'specializations');
-      const resp = await this.makeRequest(url, 'GET', true, this.getNamespace(character, region));
+      const namespace = this.getNamespace(character, region);
+      const resp = await this.makeRequest(url, 'GET', true, token, namespace);
       const data = (await resp.json()) as CharacterSpecializations;
       const activeSpecId = data.active_specialization?.id;
       const activeHeroTalentId = data.active_hero_talent_tree?.id;
@@ -328,10 +301,11 @@ class BattleNetApi {
     character: ApiCharacter,
     region: string,
     baseUrl: string,
+    token: string,
   ): Promise<ApiCharacterSummary> {
     try {
       const url = this.buildCharacterUrl(character, region, baseUrl);
-      const resp = await this.makeRequest(url, 'GET', true, this.getNamespace(character, region));
+      const resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
 
       const data = (await resp.json()) as CharacterSummary;
       return {
@@ -343,6 +317,8 @@ class BattleNetApi {
         guild_name: data.guild?.name ?? null,
         guild_id: data.guild?.id ?? null,
         last_login: data.last_login_timestamp,
+        dead: data.is_ghost ?? null,
+        self_found: data.is_self_found ?? null,
       };
     } catch (err) {
       console.log(`Failed to fetch character summary.`, err);
@@ -350,10 +326,15 @@ class BattleNetApi {
     }
   }
 
-  public async fetchCharacterItems(character: ApiCharacter, region: string, baseUrl: string): Promise<ApiItems> {
+  public async fetchCharacterItems(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+  ): Promise<ApiItems> {
     try {
       const url = this.buildCharacterUrl(character, region, baseUrl, 'equipment');
-      const resp = await this.makeRequest(url, 'GET', true, this.getNamespace(character, region));
+      const resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
       const data = (await resp.json()) as ItemResponse;
       const client = BattleNetApi.getS3Client();
 
@@ -363,18 +344,18 @@ class BattleNetApi {
         const s3Key = `items/${filename}`;
         const imageExist = await checkIfImageExist(s3Key, client);
         if (!imageExist) {
-          const media = await this.fetchItemMedia(region, baseUrl, item.item.id);
+          const media = await this.fetchItemMedia(region, baseUrl, item.item.id, token);
           if (media) {
             await this.processMediaAssets(media.assets, () => s3Key, client);
           }
         }
 
-        const processedSockets = await this.processSockets(item.sockets, item.item.id);
+        const processedSockets = await this.processSockets(item.sockets, item.item.id, token);
 
         return {
           [slot]: {
             enchantments: item.enchantments
-              ? item.enchantments.map((enchantment) => enchantment.display_string.replace(/\|A:.*/, ''))
+              ? item.enchantments.map((enchantment) => enchantment.display_string?.replace(/\|A:.*/, ''))
               : null,
             setBonus: item.set?.display_string
               ? {
@@ -402,6 +383,7 @@ class BattleNetApi {
               item.stats?.map((stat) => ({
                 name: stat.type.name,
                 value: stat.value,
+                display_string: stat.display.display_string,
                 color: rgbaToHex(stat.display.color),
                 is_equipped_bonus: stat.is_equip_bonus ?? false,
               })) || [],
@@ -415,7 +397,7 @@ class BattleNetApi {
               : item.requirements?.display_string
               ? item.requirements.display_string
               : null,
-            level: item.level.value,
+            level: item.level?.value || null,
             transmog: item.transmog?.item.name || null,
           },
         };

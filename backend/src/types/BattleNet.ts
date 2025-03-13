@@ -55,6 +55,8 @@ type WowCharacter = {
   };
   level: number;
   is_valid: boolean;
+  is_ghost?: boolean;
+  is_self_found?: boolean;
 };
 
 type WowAccount = {
@@ -128,7 +130,7 @@ export type Item = {
   stats: {
     type: { name: string };
     value: number;
-    display: { color: { r: number; g: number; b: number; a: number } };
+    display: { color: { r: number; g: number; b: number; a: number }, display_string?: string };
     is_equip_bonus?: boolean;
   }[];
   spells?: {
@@ -136,7 +138,7 @@ export type Item = {
     description: string;
   }[];
   requirements?: { level: { display_string: string }; display_string?: string };
-  level: { value: number };
+  level?: { value: number | null };
   transmog?: { item: { name: string } };
   slot: { type: string; name: string };
 };
@@ -157,6 +159,8 @@ export type CharacterSummary = {
   last_login_timestamp: number;
   average_item_level: number;
   equipped_item_level: number;
+  is_ghost?: boolean;
+  is_self_found?: boolean;
   active_title?: {
     name: string;
   };
@@ -164,6 +168,32 @@ export type CharacterSummary = {
 
 export type CharacterStatus = {
   is_valid: boolean;
+};
+
+export type CharacterSpecializationsClassic = {
+  specialization_groups: {
+    is_active: boolean;
+    specializations: {
+      talents: {
+        talent: {
+          id: number;
+        };
+        spell_tooltip: {
+          spell: {
+            name: string;
+            id: number;
+          };
+          description: string;
+          cast_time?: string;
+          cooldown?: string;
+          range?: string;
+          power_cost?: string | null;
+        };
+      }[];
+      specialization_name: string;
+      spent_points?: number;
+    }[];
+  }[];
 };
 
 export type CharacterSpecializations = {

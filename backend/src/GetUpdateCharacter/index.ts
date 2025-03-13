@@ -25,7 +25,11 @@ import { JWT } from '../types/Twitch';
 const ddbClient = new DynamoDBClient();
 const BattleNetApiManager = BattleNetApi.getInstance();
 
-const processCharacter = async (character: DynamoCharacter, baseUrl: string): Promise<DynamoCharacter | null> => {
+const processCharacter = async (
+  character: DynamoCharacter,
+  baseUrl: string,
+  token: string,
+): Promise<DynamoCharacter | null> => {
   const apiChar: ApiCharacter = {
     class: character.class,
     faction: character.faction,
@@ -42,7 +46,7 @@ const processCharacter = async (character: DynamoCharacter, baseUrl: string): Pr
   };
 
   try {
-    const isValid = await BattleNetApiManager.fetchCharacterStatus(apiChar, character.region, baseUrl);
+    const isValid = await BattleNetApiManager.fetchCharacterStatus(apiChar, character.region, baseUrl, token);
 
     if (!isValid) {
       const deleteParams: DeleteItemCommandInput = {
@@ -56,10 +60,10 @@ const processCharacter = async (character: DynamoCharacter, baseUrl: string): Pr
     }
 
     const [mediaData, items, summary, talents] = await Promise.all([
-      BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl),
-      BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl),
-      BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl),
-      BattleNetApiManager.fetchCharacterSpecializations(apiChar, character.region, baseUrl),
+      BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterSpecializations(apiChar, character.region, baseUrl, token),
     ]);
 
     return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents };
@@ -148,7 +152,9 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     throw new Error(`No characters found.`);
   }
 
-  const processedCharacters = await Promise.all(allCharacters.map((character) => processCharacter(character, baseUrl)));
+  const processedCharacters = await Promise.all(
+    allCharacters.map((character) => processCharacter(character, baseUrl, user.state)),
+  );
 
   const validCharacters = processedCharacters.filter((character) => character !== null);
 
