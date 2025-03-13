@@ -16,6 +16,7 @@ import { useTwitchAuth } from '@/hooks/useTwitchAuth';
 import { useFetchTalentsQuery } from '@/store/api/characters';
 import { ApiCharacter } from '@/types/Characters';
 import { toUnderscores } from '@/lib/utils';
+import { Skull } from '@/assets/icons/Skull';
 
 interface IMenuHeaderProps {
   setView: React.Dispatch<React.SetStateAction<Views>>;
@@ -91,6 +92,13 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
           }}
         >
           <Star className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
+        </div>
+        <div
+          data-active={`${view === Views.RAIDS ? true : false}`}
+          className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-yellow-500`}
+          onClick={() => setView(Views.RAIDS)}
+        >
+          <Skull className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
         </div>
         {!countdown.invalid && isStreamer && (
           <div className="w-[24px] h-[24px] flex flex-col justify-center items-center ml-auto mr-1">
