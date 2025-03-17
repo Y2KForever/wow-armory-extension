@@ -30,7 +30,7 @@
     "@tanstack/react-table": "^8.21.2",
     "@types/react-window": "^1.8.8",
     "@uidotdev/usehooks": "^2.4.1",
-    "@uiw/react-color": "^2.4.4",
+    "@uiw/react-color": "^2.4.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
