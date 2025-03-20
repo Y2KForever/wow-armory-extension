@@ -107,3 +107,46 @@ export type ApiCharacterTalents = {
     loadout_code: string;
   };
 };
+
+export type ApiRaids = {
+  raids: {
+    name: string;
+    id: number;
+    instances: {
+      name: string;
+      id: number;
+      modes: {
+        [difficultyType: string]: {
+          status: string;
+          progress: { completed: number };
+          encounters: Record<number, number>;
+        };
+      }[];
+    }[];
+  }[];
+};
+
+export type ApiInstance = {
+  type: string;
+  description: string;
+  encounters: {
+    name: string;
+    id: number;
+  }[];
+  expansion: {
+    name: string;
+    id: number;
+  };
+  modes: {
+    mode: {
+      type: string;
+      name: string;
+    };
+    players: number;
+    is_tracked: boolean;
+  }[];
+  id: number;
+  image: string;
+  name: string;
+  minimum_level: number;
+};
