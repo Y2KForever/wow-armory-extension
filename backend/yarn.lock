@@ -703,9 +703,9 @@
     tslib "^2.6.2"
 
 "@middy/core@^6.x.x":
-  version "6.1.5"
-  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.1.5.tgz#ffcb3ec240bae79fcf4b1f831e3ab55f4003724f"
-  integrity sha512-0Q03mDG+NuU0clJUZfAVHHqkpt3rXn2jpGO7uD+G+OF9DWGLRpASX0R91kkN9GEbiRtIZ+Njve8V+ECXFEToNQ==
+  version "6.1.6"
+  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.1.6.tgz#c7773881cbd1869dc50d7a0bce3718e37a5573a7"
+  integrity sha512-YT7J0+9zgGIhKnC6lA5z1iE+EDHpmMda7H7gD59cu4inxRC2RTk+ensGFaJxXXMlAM08vGJn6Q5gH8KnV6YWoQ==
 
 "@middy/error-logger@^6.x.x":
   version "6.1.5"
