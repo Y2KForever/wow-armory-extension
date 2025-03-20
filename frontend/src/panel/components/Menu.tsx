@@ -13,8 +13,8 @@ import { useCountdown } from '@/hooks/useCountdown';
 import { useAppSelect } from '@/store/store';
 import { selectSelectedProfile } from '@/store/selectors/selectProfile';
 import { useTwitchAuth } from '@/hooks/useTwitchAuth';
-import { useFetchTalentsQuery } from '@/store/api/characters';
-import { ApiCharacter } from '@/types/Characters';
+import { useFetchInstancesQuery, useFetchTalentsQuery } from '@/store/api/characters';
+import { ApiCharacter, InstanceType } from '@/types/Characters';
 import { toUnderscores } from '@/lib/utils';
 import { Skull } from '@/assets/icons/Skull';
 
@@ -38,6 +38,16 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
   const { isLoading: isTalentsLoading } = useFetchTalentsQuery(
     {
       spec: classSpec,
+      character: selectedCharacter,
+    },
+    {
+      skip: !selectedCharacter,
+    },
+  );
+
+  const { isLoading: isRaidsLoading } = useFetchInstancesQuery(
+    {
+      type: InstanceType.RAID,
       character: selectedCharacter,
     },
     {
@@ -98,7 +108,11 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
         <div
           data-active={`${view === Views.RAIDS ? true : false}`}
           className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-yellow-500`}
-          onClick={() => setView(Views.RAIDS)}
+          onClick={() => {
+            if (!isRaidsLoading && selectedCharacter) {
+              setView(Views.RAIDS);
+            }
+          }}
         >
           <Skull className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
         </div>

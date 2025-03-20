@@ -10,6 +10,7 @@ import { MenuHeader } from '../components/Menu';
 import { CharactersView } from './Characters';
 import { CharacterView } from './Character';
 import { TalentView } from './Talents';
+import { InstanceView } from './Instances';
 
 export const Panel = () => {
   const twitchAuth = useContext(TwitchAuthContext);
@@ -61,10 +62,9 @@ export const Panel = () => {
           )}
         </SimpleBar>
       )}
-      {view === Views.CHARACTER && selectedCharacter && (
-        <CharacterView character={selectedCharacter} />
-      )}
+      {view === Views.CHARACTER && selectedCharacter && <CharacterView character={selectedCharacter} />}
       {view === Views.TALENTS && selectedCharacter && <TalentView character={selectedCharacter} />}
+      {view === Views.RAIDS && selectedCharacter && <InstanceView character={selectedCharacter} />}
     </div>
   );
 };
