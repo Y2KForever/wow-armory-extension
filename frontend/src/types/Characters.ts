@@ -67,6 +67,25 @@ type ApiCharacter = {
   equip_item_level: number;
   dead: boolean | null;
   self_found: boolean | null;
+  raids: {
+    id: number;
+    name: string;
+    instances: {
+      id: number;
+      name: string;
+      modes: {
+        [mode: string]: {
+          encounters: {
+            [id: number]: number;
+          };
+          progress: {
+            completed: number;
+          };
+          status: string;
+        };
+      }[];
+    }[];
+  }[];
   talents: {
     class_talents: number[];
     hero_id: number;
@@ -209,6 +228,41 @@ type ApiTalents = {
   spec: string;
 };
 
+type ApiInstance = {
+  updated_at: string;
+  expansion: {
+    name: string;
+    key: {
+      href: string;
+    };
+    id: number;
+  };
+  image: string;
+  modes: {
+    mode: {
+      type: string;
+      name: string;
+    };
+    is_tracked: boolean;
+    players: number;
+    is_timewalking?: boolean;
+  }[];
+  encounters: {
+    name: string;
+    id: number;
+  }[];
+  id: number;
+  name: string;
+  type: string;
+  minimum_level?: number;
+  description?: string;
+};
+
+export type RaidsByExpansion = {
+  expansion: string;
+  raids: ApiInstance[];
+};
+
 type Spell = {
   name: string;
   id: number;
@@ -227,7 +281,7 @@ interface UniqueTalent {
     cooldown?: string;
     powercost?: string;
     range?: string;
-    talent_id: number | null;
+    talent_id: number | null;
     rank: number;
   }[];
 }
@@ -238,5 +292,20 @@ enum TalentType {
   HERO = 'hero',
 }
 
-export type { WowCharacter, ApiCharacter, ApiTalents, Talent, HeroTalent, Rank, Tooltip, UniqueTalent };
-export { Slot, slotsOrderLeft, slotsOrderRight, slotsOrderBottom, Faction, typeMap, type Spell, TalentType };
+enum InstanceType {
+  RAID = 'RAID',
+  DUNGEON = 'DUNGEON',
+}
+
+export type { WowCharacter, ApiCharacter, ApiTalents, Talent, HeroTalent, Rank, Tooltip, UniqueTalent, ApiInstance };
+export {
+  Slot,
+  slotsOrderLeft,
+  slotsOrderRight,
+  slotsOrderBottom,
+  Faction,
+  typeMap,
+  type Spell,
+  TalentType,
+  InstanceType,
+};

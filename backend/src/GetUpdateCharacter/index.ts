@@ -64,6 +64,7 @@ const processCharacter = async (
       BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterSpecializations(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterRaids(apiChar, character.region, baseUrl, token),
     ]);
 
     return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents };

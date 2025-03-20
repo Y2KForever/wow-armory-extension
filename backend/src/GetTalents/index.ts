@@ -55,7 +55,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     return ApiResult(200, JSON.stringify(response));
   } catch (err) {
     console.error(err);
-    return ApiResult(500, JSON.stringify({ error: 'Failed to get user' }));
+    return ApiResult(500, JSON.stringify({ error: 'Failed to get talents' }));
   }
 };
 

@@ -130,7 +130,7 @@ export type Item = {
   stats: {
     type: { name: string };
     value: number;
-    display: { color: { r: number; g: number; b: number; a: number }, display_string?: string };
+    display: { color: { r: number; g: number; b: number; a: number }; display_string?: string };
     is_equip_bonus?: boolean;
   }[];
   spells?: {
@@ -266,3 +266,80 @@ export enum Slots {
   MAIN_HAND = 'main_hand',
   OFF_HAND = 'off_hand',
 }
+
+export type Raids = {
+  expansions: {
+    expansion: {
+      name: string;
+      id: number;
+    };
+    instances: {
+      instance: {
+        name: string;
+        id: number;
+      };
+      modes: {
+        difficulty: {
+          type: string;
+        };
+        status: {
+          type: string;
+        };
+        progress: {
+          completed_count: number;
+          encounters: {
+            encounter: {
+              id: number;
+            };
+            completed_count: number;
+          }[];
+        };
+      }[];
+    }[];
+  }[];
+};
+
+export type JournalIndex = {
+  instances: {
+    key: {
+      href: string;
+    };
+    name: string;
+    id: number;
+  }[];
+};
+
+export type JournalInstance = {
+  id: number;
+  name: string;
+  description: string;
+  encounters: {
+    key: {
+      href: string;
+    };
+    name: string;
+    id: number;
+  }[];
+  expansion: {
+    name: string;
+    id: number;
+  };
+  modes: {
+    mode: {
+      type: string;
+      name: string;
+    };
+    players: number;
+    is_tracked: boolean;
+  }[];
+  media: {
+    key: {
+      href: string;
+    };
+    id: number;
+  };
+  minimum_level: number;
+  category: {
+    type: string;
+  };
+};

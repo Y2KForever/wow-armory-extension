@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { setCharacters, setTalents } from '../slices/characters';
+import { setCharacters, setInstances, setTalents } from '../slices/characters';
 import { RootState } from '../store';
-import { ApiCharacter, ApiTalents, WowCharacter } from '@/types/Characters';
+import { ApiCharacter, ApiInstance, ApiTalents, WowCharacter, InstanceType } from '@/types/Characters';
 
 type GetCharactersProps = {
   region: string;
@@ -69,6 +69,21 @@ export const charactersApi = createApi({
       },
       providesTags: ['talents'],
     }),
+    fetchInstances: builder.query<ApiInstance, { type: InstanceType; character: ApiCharacter }>({
+      query: ({ type }) => ({
+        url: `/instances`,
+        params: { type },
+        method: 'GET',
+      }),
+      async onQueryStarted({}, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setInstances(data));
+        } catch (err) {
+          console.error(`Error processing instances: `, err);
+        }
+      },
+    }),
     importCharacters: builder.mutation<void, ImportCharactersProps>({
       query: ({ characters, region }) => ({
         url: 'import-characters',
@@ -82,4 +97,9 @@ export const charactersApi = createApi({
   }),
 });
 
-export const { useLazyPostFetchCharactersQuery, useImportCharactersMutation, useFetchTalentsQuery } = charactersApi;
+export const {
+  useLazyPostFetchCharactersQuery,
+  useImportCharactersMutation,
+  useFetchTalentsQuery,
+  useFetchInstancesQuery,
+} = charactersApi;

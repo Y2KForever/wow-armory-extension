@@ -16,6 +16,10 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
   theme: {
     extend: {
+      backgroundImage: {
+        'full-background': 'linear-gradient(to right, #0d4a00 0%, #1b9601 100%)',
+        'partial-background': 'linear-gradient(to right, #7b3f00 0%, #c76700 100%)',
+      },
       textShadow: {
         sm: '0 1px 2px var(--tw-shadow-color)',
         DEFAULT: '0 2px 4px var(--tw-shadow-color)',
@@ -37,6 +41,12 @@ export default {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
+        },
+        instance: {
+          'border-progress': 'rgba(255, 255, 255, 0.2)',
+          border: '#3f4f56',
+          'text-shadow': '0 0 1px transparent, 0px 1px 2px rgba(0, 0, 0, 0.8)',
+          'empty-background': '#181818',
         },
         blizzard: {
           DEFAULT: '#0074e0',

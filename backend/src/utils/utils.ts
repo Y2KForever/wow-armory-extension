@@ -6,6 +6,13 @@ import { JWT } from '../types/Twitch';
 import { getTwitchExtensionSecret } from './secretsManager';
 import { ApiResultResponse } from '../types/Api';
 import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DynamoDBClient,
+  ProvisionedThroughputExceededException,
+  TransactWriteItemsCommand,
+  TransactWriteItemsCommandInput,
+  TransactWriteItemsInput,
+} from '@aws-sdk/client-dynamodb';
 
 export const simplifyDynamoDBResponse = (dynamoResponse: any): any => {
   if (!dynamoResponse) {
@@ -181,8 +188,6 @@ export const downloadImage = async (url: string): Promise<Buffer> => {
   if (!resp.ok) {
     console.log(`url`, url);
     console.log('resp-status', resp.statusText);
-    console.log('resp', await resp.text());
-    throw new Error(`Failed to download image: ${resp.statusText}`);
   }
   return Buffer.from(await resp.arrayBuffer());
 };
@@ -217,4 +222,22 @@ export const uploadImage = async (filename: string, imageBuffer: Buffer, client:
   } catch (err) {
     throw err;
   }
+};
+
+export const executeTransaction = async (ddbClient: DynamoDBClient, params: TransactWriteItemsInput) => {
+  let attempt = 0;
+  while (attempt < 100) {
+    try {
+      return await ddbClient.send(new TransactWriteItemsCommand(params));
+    } catch (err) {
+      if (err instanceof ProvisionedThroughputExceededException) {
+        const delay = 3000 * Math.pow(2, attempt) + Math.random() * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        attempt++;
+      } else {
+        throw err;
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
 };

@@ -1,14 +1,16 @@
-import { ApiTalents, WowCharacter } from '@/types/Characters';
+import { RaidsByExpansion, ApiTalents, WowCharacter } from '@/types/Characters';
 import { createSlice } from '@reduxjs/toolkit';
 
 interface CharactersState {
   characters: WowCharacter[];
   talents: ApiTalents | null;
+  instances: RaidsByExpansion[] | null;
 }
 
 const initialState: CharactersState = {
   characters: [],
   talents: null,
+  instances: null,
 };
 
 const charactersSlice = createSlice({
@@ -24,12 +26,19 @@ const charactersSlice = createSlice({
     setTalents: (state, action) => {
       state.talents = action.payload;
     },
+    setInstances: (state, action) => {
+      state.instances = action.payload;
+    },
+    clearInstances: (state, action) => {
+      state.instances = null;
+    },
     clearTalents: (state) => {
       state.talents = null;
     },
   },
 });
 
-export const { clearCharacters, setCharacters, setTalents, clearTalents } = charactersSlice.actions;
+export const { clearCharacters, setCharacters, setTalents, clearTalents, setInstances, clearInstances } =
+  charactersSlice.actions;
 
 export default charactersSlice.reducer;

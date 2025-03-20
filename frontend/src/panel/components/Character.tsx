@@ -9,7 +9,6 @@ interface ICharacterProps {
 }
 
 export const Character = ({ character }: ICharacterProps) => {
-  console.log('char', character);
   return (
     <div key={'item'} className="flex flex-col flex-1 justify-center w-full">
       <motion.div

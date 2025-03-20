@@ -194,6 +194,32 @@ Resources:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
 
+  WoWExtensionRaidsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wow-extension-raids
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: N
+        - AttributeName: type
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+        - IndexName: category_index
+          KeySchema:
+            - AttributeName: type
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
   WoWExtensionCdnBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -294,39 +320,46 @@ Resources:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: 'Allow'
+          - Effect: Allow
             Principal:
-              Service: 'lambda.amazonaws.com'
-            Action: 'sts:AssumeRole'
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: 'WowExtensionLambdaPolicy'
+        - PolicyName: DynamoDBAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Effect: 'Allow'
+              - Effect: Allow
                 Action:
-                  - 'dynamodb:GetItem'
-                  - 'dynamodb:UpdateItem'
-                  - 'dynamodb:PutItem'
-                  - 's3:PutObject'
-                  - 's3:GetObject'
-                  - 'dynamodb:Query'
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
                 Resource:
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-talents'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-raids'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-raids/index/category_index'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-talents/index/class-index'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters/index/user_id-index'
-                  - !Sub 'arn:aws:s3:::wow-extension-cdn/*'
-              - Effect: 'Allow'
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
                 Action:
-                  - 'logs:CreateLogGroup'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                Resource: arn:aws:logs:*:*:log-group:/aws/lambda/*
-              - Effect: 'Allow'
-                Action:
-                  - 'secretsmanager:GetSecretValue'
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource: !Sub 'arn:aws:s3:::wow-extension-cdn/*'
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
                 Resource:
                   - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:prod/battle.net/client-cpH9hz'
                   - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:prod/wow-extension/secret-SvxB3O'
@@ -473,6 +506,7 @@ Resources:
                 Resource:
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-raids'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters/index/user_id-index'
                   - !Sub 'arn:aws:s3:::wow-extension-cdn/*'
               - Effect: 'Allow'
@@ -510,6 +544,26 @@ Resources:
           Type: ScheduleV2
           Properties:
             ScheduleExpression: 'cron(15 00 * * ? *)'
+            ScheduleExpressionTimezone: Europe/London
+            RetryPolicy:
+              MaximumRetryAttempts: 0
+            FlexibleTimeWindow:
+              Mode: 'OFF'
+            RoleArn: !GetAtt UpdatesCharactersScheduleRole.Arn
+
+  UpdateRaidsSchedule:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/UpdateInstances/index.handler
+      Description: Updates instances once a month.
+      Timeout: 900
+      Role: !GetAtt UpdateCharactersLambdaRole.Arn
+      Events:
+        CharacterUpdateSchedule:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: 'cron(15 0 1 * ? *)'
             ScheduleExpressionTimezone: Europe/London
             RetryPolicy:
               MaximumRetryAttempts: 0
@@ -569,6 +623,21 @@ Resources:
             RestApiId:
               Ref: API
 
+  GetInstancesFunction:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/GetInstances/index.handler
+      Description: Gets instances of specific type
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetUpdateCharactersForUser:
+          Type: Api
+          Properties:
+            Path: /instances
+            Method: GET
+            RestApiId:
+              Ref: API
 
 Outputs:
   LandingPageCloudFrontId:

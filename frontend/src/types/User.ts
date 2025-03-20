@@ -14,4 +14,5 @@ export enum Views {
   LIST = 'list',
   CHARACTER = 'character',
   TALENTS = 'talents',
+  RAIDS = 'raids'
 }

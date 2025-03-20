@@ -10,6 +10,34 @@ export type ddbProfile = {
   forced_update: string;
 };
 
+export type DynamoInstance = {
+  type: string;
+  description: string;
+  encounters: {
+    key: {
+      href: string;
+    };
+    name: string;
+    id: number;
+    expansion: {
+      name: string;
+      id: number;
+    };
+    modes: {
+      mode: {
+        type: string;
+        name: string;
+      };
+      players: number;
+      is_tracked: boolean;
+    }[];
+  }[];
+  id: number;
+  image: string;
+  name: string;
+  minimum_level: number;
+}[];
+
 export type DynamoCharacter = {
   character_id: number;
   achievement_points: number;

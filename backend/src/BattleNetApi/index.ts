@@ -1,18 +1,29 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import { ApiCharacter, ApiCharacterStatus, ApiCharacterSummary, ApiCharacterTalents, ApiItems } from '../types/Api';
+import {
+  ApiCharacter,
+  ApiCharacterStatus,
+  ApiCharacterSummary,
+  ApiCharacterTalents,
+  ApiInstance,
+  ApiItems,
+  ApiRaids,
+} from '../types/Api';
 import {
   CharacterSpecializations,
-  CharacterSpecializationsClassic,
   CharactersResponse,
   CharacterStatus,
   CharacterSummary,
   ItemResponse,
+  JournalIndex,
+  JournalInstance,
   MediaResponse,
+  Raids,
   Slots,
   Talents,
   TokenResponse,
 } from '../types/BattleNet';
-import { checkIfImageExist, downloadImage, rgbaToHex, toDashes, uploadImage } from '../utils/utils';
+import { checkIfImageExist, delay, downloadImage, rgbaToHex, toDashes, uploadImage } from '../utils/utils';
+import { DynamoInstance } from '../types/DynamoDb';
 
 class BattleNetApi {
   private static instance: BattleNetApi;
@@ -32,6 +43,11 @@ class BattleNetApi {
       BattleNetApi.s3Client = new S3Client();
     }
     return BattleNetApi.s3Client;
+  }
+
+  private buildGameDataUrl(region, baseUrl: string, endpoint?: string): string {
+    const basePath = `https://${region}.${baseUrl}/data/wow/`;
+    return endpoint ? `${basePath}/${endpoint}` : basePath;
   }
 
   private buildCharacterUrl(character: ApiCharacter, region: string, baseUrl: string, endpoint?: string): string {
@@ -107,6 +123,27 @@ class BattleNetApi {
       mediaMap[key] = filename;
       return mediaMap;
     }, {} as Record<string, string>);
+  }
+
+  private async fetchJournalMedia(
+    region: string,
+    baseUrl: string,
+    instanceId: number,
+    token: string,
+  ): Promise<MediaResponse | null> {
+    try {
+      const resp = await this.makeRequest(
+        `https://${region}.${baseUrl}/data/wow/media/journal-instance/${instanceId}`,
+        'GET',
+        true,
+        token,
+        `static-${region}`,
+      );
+      return (await resp.json()) as MediaResponse;
+    } catch (err) {
+      console.log(`failed to fetch media for instance ${instanceId}: `, err);
+      return null;
+    }
   }
 
   private async fetchItemMedia(
@@ -324,6 +361,109 @@ class BattleNetApi {
       console.log(`Failed to fetch character summary.`, err);
       throw err;
     }
+  }
+
+  private async fetchJournalInstancesIndex(region: string, baseUrl: string, token: string): Promise<JournalIndex> {
+    const url = this.buildGameDataUrl(region, baseUrl, 'journal-instance/index');
+    try {
+      const resp = await this.makeRequest(url, 'GET', true, token, `static-${region}`);
+      if (!resp.ok) {
+        throw new Error(`Failed to fetch journal index`);
+      }
+      return (await resp.json()) as JournalIndex;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async fetchJournalInstanceId(
+    region: string,
+    baseUrl: string,
+    id: number,
+    token: string,
+  ): Promise<JournalInstance> {
+    const url = this.buildGameDataUrl(region, baseUrl, `journal-instance/${id}`);
+    try {
+      const resp = await this.makeRequest(url, 'GET', true, token, `static-${region}`);
+      if (!resp.ok) {
+        throw new Error(`Failed to fetch journal with id: ${id}`);
+      }
+      return (await resp.json()) as JournalInstance;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  public async fetchInstances(region: string, baseUrl: string, token: string): Promise<ApiInstance[]> {
+    const index = await this.fetchJournalInstancesIndex(region, baseUrl, token);
+    const client = BattleNetApi.getS3Client();
+    const instances: ApiInstance[] = [];
+    for (const idx of index.instances) {
+      const instance = await this.fetchJournalInstanceId(region, baseUrl, idx.id, token);
+      const filename = `${instance.media.id}.jpg`;
+      const s3Key = `instance/${filename}`;
+
+      const imageExist = await checkIfImageExist(s3Key, client);
+      if (!imageExist) {
+        const media = await this.fetchJournalMedia(region, baseUrl, instance.media.id, token);
+        if (media) {
+          await this.processMediaAssets(media.assets, () => s3Key, client);
+        }
+      }
+      instances.push({
+        type: instance.category.type,
+        description: instance.description,
+        encounters: instance.encounters.map((encounter) => {
+          return {
+            name: encounter.name,
+            id: encounter.id,
+          };
+        }),
+        expansion: instance.expansion,
+        modes: instance.modes,
+        id: instance.id,
+        image: filename,
+        name: instance.name,
+        minimum_level: instance.minimum_level,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+    return instances;
+  }
+
+  public async fetchCharacterRaids(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+  ): Promise<ApiRaids> {
+    const url = this.buildCharacterUrl(character, region, baseUrl, 'encounters/raids');
+    const resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
+    const data = (await resp.json()) as Raids;
+
+    return {
+      raids:
+        data.expansions?.map((expansion) => ({
+          name: expansion.expansion.name,
+          id: expansion.expansion.id,
+          instances: expansion.instances?.map((instance) => ({
+            name: instance.instance.name,
+            id: instance.instance.id,
+            modes: instance.modes?.map((mode) => ({
+              [mode.difficulty.type]: {
+                status: mode.status.type,
+                progress: {
+                  completed: mode.progress.completed_count,
+                },
+                encounters: Object.fromEntries(
+                  mode.progress.encounters?.map((encounter) => [encounter.encounter.id, encounter.completed_count]),
+                ),
+              },
+            })),
+          })),
+        })) || null,
+    };
   }
 
   public async fetchCharacterItems(

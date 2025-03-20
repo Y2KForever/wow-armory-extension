@@ -16,7 +16,6 @@ import { middyCore } from '../utils/middyWrapper';
 import BattleNetApi from '../BattleNetApi';
 import { ddbProfile, DynamoCharacter } from '../types/DynamoDb';
 import { getClientCredentials } from '../utils/secretsManager';
-import { ClientCredentials } from '../types/SecretManager';
 import { TokenResponse } from '../types/BattleNet';
 
 const ddbClient = new DynamoDBClient();
@@ -56,14 +55,15 @@ const processCharacter = async (
       return null;
     }
 
-    const [mediaData, items, summary, talents] = await Promise.all([
+    const [mediaData, items, summary, talents, raids] = await Promise.all([
       BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterSpecializations(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterRaids(apiChar, character.region, baseUrl, token),
     ]);
 
-    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents };
+    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents, ...raids };
   } catch (err) {
     console.error(`Error processing character ${character.character_id}:`, err);
     throw err;
