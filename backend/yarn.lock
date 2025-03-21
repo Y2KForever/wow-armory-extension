@@ -91,10 +91,10 @@
     "@aws-lambda-powertools/commons" "^2.16.0"
     aws-xray-sdk-core "^3.10.3"
 
-"@aws-sdk/client-dynamodb@^3.758.0":
-  version "3.758.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/client-dynamodb/-/client-dynamodb-3.758.0.tgz#5a09df4fd676a88912f8e221f50964ba250d3bed"
-  integrity sha512-ZdVVCvmQ4wlV22HgYZKndIYNKkFfTLi8PIOF5rOkqthgYRTfVzKajrVbYebCs5jMDTk73LPLl2Ze/EYBEHKlBA==
+"@aws-sdk/client-dynamodb@^3.767.0":
+  version "3.767.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/client-dynamodb/-/client-dynamodb-3.767.0.tgz#93674371e48c32706838750b96fba71d3acd33cf"
+  integrity sha512-uoZFUnQr9jhxPdhPz0o4/1osstDXdteOIw8tNRTe3JKK9eIWAG3YrVv9wfJPxEFUGvntUe+anvdiy+8ycKmsYQ==
   dependencies:
     "@aws-crypto/sha256-browser" "5.2.0"
     "@aws-crypto/sha256-js" "5.2.0"
@@ -703,14 +703,14 @@
     tslib "^2.6.2"
 
 "@middy/core@^6.x.x":
-  version "6.1.5"
-  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.1.5.tgz#ffcb3ec240bae79fcf4b1f831e3ab55f4003724f"
-  integrity sha512-0Q03mDG+NuU0clJUZfAVHHqkpt3rXn2jpGO7uD+G+OF9DWGLRpASX0R91kkN9GEbiRtIZ+Njve8V+ECXFEToNQ==
+  version "6.1.6"
+  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.1.6.tgz#c7773881cbd1869dc50d7a0bce3718e37a5573a7"
+  integrity sha512-YT7J0+9zgGIhKnC6lA5z1iE+EDHpmMda7H7gD59cu4inxRC2RTk+ensGFaJxXXMlAM08vGJn6Q5gH8KnV6YWoQ==
 
 "@middy/error-logger@^6.x.x":
-  version "6.1.5"
-  resolved "https://registry.yarnpkg.com/@middy/error-logger/-/error-logger-6.1.5.tgz#903a9cdecfa76150412edf54116af35bfa92523e"
-  integrity sha512-SFDdkXgUMewqv5Z2UW1kwzvUozDOODz1ibn5gt2u1DtqTyz82iDVBxWVDx1CUH6RtZVdLwrtJd9o7AxLivDRiA==
+  version "6.1.6"
+  resolved "https://registry.yarnpkg.com/@middy/error-logger/-/error-logger-6.1.6.tgz#9806454a618f879167713f40075d3b55b23dc434"
+  integrity sha512-QaaJI6501sZKWokH51vEp82pnG8Zbq7CiBG/Ug85Jx02lG1cfuoV1hcp2ZsPpWNHvLcGiI3/xeEjpsUFeI0RNw==
 
 "@smithy/abort-controller@^4.0.1":
   version "4.0.1"
@@ -1246,10 +1246,10 @@
   resolved "https://registry.yarnpkg.com/@types/ms/-/ms-2.1.0.tgz#052aa67a48eccc4309d7f0191b7e41434b90bb78"
   integrity sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==
 
-"@types/node@*", "@types/node@^22.13.10":
-  version "22.13.10"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.13.10.tgz#df9ea358c5ed991266becc3109dc2dc9125d77e4"
-  integrity sha512-I6LPUvlRH+O6VRUqYOcMudhaIdUVWfsjnZavnsraHvpBwaEyMN29ry+0UVJhImYL16xsscu0aske3yA+uPOWfw==
+"@types/node@*", "@types/node@^22.13.11":
+  version "22.13.11"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.13.11.tgz#f0ed6b302dcf0f4229d44ea707e77484ad46d234"
+  integrity sha512-iEUCUJoU0i3VnrCmgoWCXttklWcvoCIx4jzcP22fioIVSdTmjgoEvmAO/QPw6TcS9k5FrNgn4w7q5lGOd1CT5g==
   dependencies:
     undici-types "~6.20.0"
 
