@@ -14,5 +14,7 @@ export enum Views {
   LIST = 'list',
   CHARACTER = 'character',
   TALENTS = 'talents',
-  RAIDS = 'raids'
+  RAIDS = 'raids',
+  DUNGEON = 'dungeon',
+  PVP = 'pvp',
 }

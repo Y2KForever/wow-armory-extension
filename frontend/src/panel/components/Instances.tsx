@@ -4,7 +4,7 @@ import { selectSelectedInstances } from '@/store/selectors/selectInstances';
 import { useAppSelect } from '@/store/store';
 import { ApiCharacter, ApiInstance, RaidsByExpansion } from '@/types/Characters';
 import { motion } from 'framer-motion';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import SimpleBar from 'simplebar-react';
 
 interface IInstanceProps {

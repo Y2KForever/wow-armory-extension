@@ -17,6 +17,9 @@ import { useFetchInstancesQuery, useFetchTalentsQuery } from '@/store/api/charac
 import { ApiCharacter, InstanceType } from '@/types/Characters';
 import { toUnderscores } from '@/lib/utils';
 import { Skull } from '@/assets/icons/Skull';
+import { Swords } from '@/assets/icons/Swords';
+import { Dungeon } from '@/assets/icons/Dungeon';
+import { Helmet } from '@/assets/icons/Helmet';
 
 interface IMenuHeaderProps {
   setView: React.Dispatch<React.SetStateAction<Views>>;
@@ -81,43 +84,70 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
 
   return (
     <div className="flex flex-col w-full">
-      <div className="flex flex-row w-full h-[32px] items-center bg-backgroundBlizzard-light space-between">
-        <div className="w-[28px] flex flex-col justify-center" onClick={() => setView(Views.LIST)}>
+      <div className="flex flex-row w-full h-[32px] items-center bg-backgroundBlizzard-light">
+        <div
+          className="w-[32px] h-[32px] grow-1 shrink-0 flex flex-col justify-center items-center"
+          onClick={() => setView(Views.LIST)}
+        >
           <DoubleArrowLeft width={24} height={24} className="stroke-white hover:cursor-pointer" />
         </div>
-        <div
-          data-active={`${view === Views.CHARACTER ? true : false}`}
-          className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-indigo-500`}
-          onClick={() => setView(Views.CHARACTER)}
-        >
-          <CharacterIcon className="fill-white hover:cursor-pointer hover:fill-indigo-500" />
-        </div>
-        {selectedCharacter.namespace === 'retail' && (
+        <div className="flex flex-row justify-center w-full">
           <div
-            data-active={`${view === Views.TALENTS ? true : false}`}
-            className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-yellow-500`}
+            data-active={`${view === Views.CHARACTER ? true : false}`}
+            className={`mr-3 w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard [&>svg]:data-[active=true]:fill-indigo-500`}
+            onClick={() => setView(Views.CHARACTER)}
+          >
+            <Helmet className="fill-white hover:cursor-pointer hover:fill-indigo-500" />
+          </div>
+          {selectedCharacter.namespace === 'retail' && (
+            <div
+              data-active={`${view === Views.TALENTS ? true : false}`}
+              className={`mr-3 w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard [&>svg]:data-[active=true]:fill-yellow-500`}
+              onClick={() => {
+                if (!isTalentsLoading && selectedCharacter) {
+                  setView(Views.TALENTS);
+                }
+              }}
+            >
+              <Star className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
+            </div>
+          )}
+          <div
+            data-active={`${view === Views.RAIDS ? true : false}`}
+            className={`mr-3 w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard [&>svg]:data-[active=true]:fill-red-500`}
             onClick={() => {
-              if (!isTalentsLoading && selectedCharacter) {
-                setView(Views.TALENTS);
+              if (!isRaidsLoading && selectedCharacter) {
+                setView(Views.RAIDS);
               }
             }}
           >
-            <Star className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
+            <Skull className={`fill-white hover:cursor-pointer hover:fill-red-400`} />
           </div>
-        )}
-        <div
-          data-active={`${view === Views.RAIDS ? true : false}`}
-          className={`w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard ml-3 [&>svg]:data-[active=true]:fill-yellow-500`}
-          onClick={() => {
-            if (!isRaidsLoading && selectedCharacter) {
-              setView(Views.RAIDS);
-            }
-          }}
-        >
-          <Skull className={`fill-white hover:cursor-pointer hover:fill-yellow-400`} />
+          <div
+            data-active={`${view === Views.DUNGEON ? true : false}`}
+            className={`mr-3 w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard [&>svg]:data-[active=true]:fill-purple-500`}
+            onClick={() => {
+              if (!isRaidsLoading && selectedCharacter) {
+                setView(Views.DUNGEON);
+              }
+            }}
+          >
+            <Dungeon className={`fill-white hover:cursor-pointer hover:fill-purple-400`} />
+          </div>
+          <div
+            data-active={`${view === Views.PVP ? true : false}`}
+            className={`mr-3 w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard [&>svg]:data-[active=true]:fill-slate-500`}
+            onClick={() => {
+              if (!isRaidsLoading && selectedCharacter) {
+                setView(Views.PVP);
+              }
+            }}
+          >
+            <Swords className={`fill-white hover:cursor-pointer hover:fill-slate-400`} />
+          </div>
         </div>
         {!countdown.invalid && isStreamer && (
-          <div className="w-[24px] h-[24px] flex flex-col justify-center items-center ml-auto mr-1">
+          <div className="w-[32px] h-[32px] flex flex-col justify-center items-center ml-auto">
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipContent>
