@@ -70,18 +70,20 @@
     "@smithy/util-utf8" "^2.0.0"
     tslib "^2.6.2"
 
-"@aws-lambda-powertools/commons@^2.16.0":
-  version "2.16.0"
-  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/commons/-/commons-2.16.0.tgz#db4acf7a84a67be1350ee6b1dff8715175274bcc"
-  integrity sha512-HtVibLx8yCHvfRhOwI85ghJJqF3pYr49rZP+kRyath0ZnIEWfklFmv9ehcohPzlIgaiOijKV4vyGCKiXBOnigw==
-
-"@aws-lambda-powertools/logger@^2.16.0":
-  version "2.16.0"
-  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/logger/-/logger-2.16.0.tgz#07ec2295b0b55c432e0adc3c4d21933103cb3211"
-  integrity sha512-k7Xpjx1VAd/52p3Wssq83OwUFOeus6Mx9JnsXBAdAA/aUON7srbv2pPRFMGuoK9Qv5nYvADaBcL9hYtK/XknaA==
+"@aws-lambda-powertools/commons@2.34.0", "@aws-lambda-powertools/commons@^2.16.0":
+  version "2.34.0"
+  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/commons/-/commons-2.34.0.tgz#066fb212355d7f00e481e4ed63e54067bdb83841"
+  integrity sha512-ga89L3UznCwkApsrVAYGywifAh9PpccXZAVE053B6IdKvZrwjv+L+ja1WyzU9sy9UR3wPEdh0LFiUCRZRhTfvQ==
   dependencies:
-    "@aws-lambda-powertools/commons" "^2.16.0"
-    lodash.merge "^4.6.2"
+    "@aws/lambda-invoke-store" "0.3.0"
+
+"@aws-lambda-powertools/logger@^2.34.0":
+  version "2.34.0"
+  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/logger/-/logger-2.34.0.tgz#bd967125cc532513574dfaed61fb92d9c7907dba"
+  integrity sha512-FIWQcdX/dqfKE+4H8N9w7y7/3/ANmDpKDgMlMc+yPNx2XDpKK6Ou1zLFYoNt5mV6dOZunFQcKbRWUy6zIDdE0w==
+  dependencies:
+    "@aws-lambda-powertools/commons" "2.34.0"
+    "@aws/lambda-invoke-store" "0.3.0"
 
 "@aws-lambda-powertools/tracer@^2.16.0":
   version "2.16.0"
@@ -701,6 +703,11 @@
   dependencies:
     "@smithy/types" "^4.1.0"
     tslib "^2.6.2"
+
+"@aws/lambda-invoke-store@0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@aws/lambda-invoke-store/-/lambda-invoke-store-0.3.0.tgz#708802d987f8e17bdf4af4de1031660ce1cdd65f"
+  integrity sha512-sl4Bm6yiMNYrZKkqqDFWN0UfnWhlS8ivKxrYl+6t0gCLrqr8y3B2IqZZbFRkfaVVp7C/baApyh71P+LeE1A2sQ==
 
 "@middy/core@^6.x.x":
   version "6.1.6"
@@ -1664,11 +1671,6 @@ lodash.isstring@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/lodash.isstring/-/lodash.isstring-4.0.1.tgz#d527dfb5456eca7cc9bb95d5daeaf88ba54a5451"
   integrity sha512-0wJxfxH1wgO3GrbuP+dTTk7op+6L41QCXbGINEmD+ny/G/eCqGzxyCsh7159S+mgDDcoarnBw6PC1PS5+wUGgw==
-
-lodash.merge@^4.6.2:
-  version "4.6.2"
-  resolved "https://registry.yarnpkg.com/lodash.merge/-/lodash.merge-4.6.2.tgz#558aa53b43b661e1925a0afdfa36a9a1085fe57a"
-  integrity sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==
 
 lodash.once@^4.0.0:
   version "4.1.1"
