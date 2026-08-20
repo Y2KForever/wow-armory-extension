@@ -42,8 +42,13 @@ export const Character = ({ character }: ICharacterProps) => {
                 </p>
                 {character.self_found && <p className="text-xs text-white">Self-found</p>}
                 <div className="flex items-center">
-                  <ItemLevel width={16} height={16} className="fill-blizzard-yellow" />
-                  <p className="ml-1 text-sm">{`${character.equip_item_level} ILVL`}</p>
+                  <ItemLevel
+                    style={{strokeOpacity: 0.5}}
+                    width={16}
+                    height={16}
+                    className="fill-blizzard-yellow drop-shadow-lg stroke-black stroke-2"
+                  /> 
+                  <p className="ml-1 text-sm [text-shadow:0px_0px_2px_rgba(0,0,0,1)]">{`${character.equip_item_level} ILVL`}</p>
                 </div>
               </div>
 

@@ -2,6 +2,7 @@ import { HTMLProps } from 'react';
 export const ItemLevel = (props: HTMLProps<HTMLElement>) => {
   return (
     <svg
+      style={props.style}
       className={props.className}
       width={props.width}
       height={props.height}
