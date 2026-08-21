@@ -63,7 +63,7 @@ const copyLoadoutCode = async (character: ApiCharacter | null) => {
 
 export const Talents = ({ character }: ITalentsProps) => {
   const [isCopiedVisible, setIsCopiedVisible] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     return () => {

@@ -1,6 +1,5 @@
 import { DoubleArrowLeft } from '@/assets/icons/DoubleArrowLeft';
 import { Separator } from '@/components/ui/separator';
-import { CharacterIcon } from '@/assets/icons/CharacterIcon';
 import { Views } from '@/types/User';
 import { Star } from '@/assets/icons/Star';
 import { useEffect, useMemo } from 'react';
@@ -10,14 +9,13 @@ import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/comp
 import { useGetForceUpdateMutation } from '@/store/api/profile';
 import { motion, useAnimation } from 'framer-motion';
 import { useCountdown } from '@/hooks/useCountdown';
-import { useAppSelect } from '@/store/store';
-import { selectSelectedProfile } from '@/store/selectors/selectProfile';
 import { useTwitchAuth } from '@/hooks/useTwitchAuth';
 import { useFetchInstancesQuery, useFetchTalentsQuery } from '@/store/api/characters';
 import { ApiCharacter, InstanceType } from '@/types/Characters';
 import { toUnderscores } from '@/lib/utils';
 import { Skull } from '@/assets/icons/Skull';
-import { Swords } from '@/assets/icons/Swords';
+// Re-enable with the PvP tab below.
+// import { Swords } from '@/assets/icons/Swords';
 import { Dungeon } from '@/assets/icons/Dungeon';
 import { Helmet } from '@/assets/icons/Helmet';
 
@@ -32,9 +30,8 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
 
   const twitchAuth = useTwitchAuth();
   const isStreamer = useMemo(() => `U${twitchAuth.channelId}` === twitchAuth.userId, [twitchAuth]);
-  const selectedUser = useAppSelect(selectSelectedProfile);
   const controls = useAnimation();
-  const countdown = useCountdown(selectedUser?.forcedUpdate ?? '');
+  const countdown = useCountdown(selectedCharacter?.forced_update ?? new Date(0).toISOString());
   const [getForceUpdate, { isLoading: isLoadingforceUpdate }] = useGetForceUpdateMutation();
   const classSpec = `${selectedCharacter?.spec?.toLowerCase()}-${toUnderscores(selectedCharacter?.class.toLowerCase())}`;
 
@@ -76,7 +73,7 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
 
   const forceUpdate = async () => {
     try {
-      await getForceUpdate(undefined).unwrap();
+      await getForceUpdate(selectedCharacter.character_id).unwrap();
     } catch (err) {
       console.log(err);
     }
@@ -134,7 +131,10 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
           >
             <Dungeon className={`fill-white hover:cursor-pointer hover:fill-purple-400`} />
           </div>
-          <div
+          {/* PvP tab hidden until the view is designed. Panel.tsx has no
+              Views.PVP branch, so this only ever rendered an empty body.
+              Re-enable together with the Swords import above. */}
+          {/* <div
             data-active={`${view === Views.PVP ? true : false}`}
             className={`mr-3 w-[32px] h-[32px] flex flex-col justify-center items-center data-[active=true]:bg-backgroundBlizzard [&>svg]:data-[active=true]:fill-slate-500`}
             onClick={() => {
@@ -144,7 +144,7 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
             }}
           >
             <Swords className={`fill-white hover:cursor-pointer hover:fill-slate-400`} />
-          </div>
+          </div> */}
         </div>
         {!countdown.invalid && isStreamer && (
           <div className="w-[32px] h-[32px] flex flex-col justify-center items-center ml-auto">

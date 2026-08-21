@@ -343,3 +343,75 @@ export type JournalInstance = {
     type: string;
   };
 };
+
+export type TalentTreeIndex = {
+  spec_talent_trees: {
+    key: {
+      href: string;
+    };
+    name: string;
+    id: number;
+  }[];
+};
+
+// Blizzard returns `talent` as a sibling of `spell_tooltip`; the panel reads it
+// from inside `spell_tooltip`, so UpdateTalents lifts it across when mapping.
+export type TalentTreeTooltip = {
+  talent?: {
+    name: string;
+    key: {
+      href: string;
+    };
+    id: number;
+  };
+  spell_tooltip?: {
+    spell: {
+      name: string;
+      id: number;
+      key: {
+        href: string;
+      };
+    };
+    description: string;
+    cast_time?: string;
+    cooldown?: string;
+    range?: string;
+    power_cost?: string;
+  };
+};
+
+export type TalentTreeNode = {
+  id: number;
+  node_type?: {
+    id: number;
+    type: string;
+  };
+  display_row?: number;
+  display_col?: number;
+  locked_by?: number[];
+  unlocks?: number[];
+  ranks?: {
+    rank: number;
+    tooltip?: TalentTreeTooltip & { choice_of_tooltips?: TalentTreeTooltip[] };
+    choice_of_tooltips?: TalentTreeTooltip[];
+  }[];
+};
+
+export type TalentTree = {
+  id: number;
+  playable_class?: {
+    name: string;
+    id: number;
+  };
+  playable_specialization?: {
+    name: string;
+    id: number;
+  };
+  class_talent_nodes?: TalentTreeNode[];
+  spec_talent_nodes?: TalentTreeNode[];
+  hero_talent_trees?: {
+    id: number;
+    name: string;
+    hero_talent_nodes?: TalentTreeNode[];
+  }[];
+};

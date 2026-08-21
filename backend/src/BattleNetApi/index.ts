@@ -20,10 +20,23 @@ import {
   Raids,
   Slots,
   Talents,
+  TalentTree,
+  TalentTreeIndex,
+  TalentTreeNode,
+  TalentTreeTooltip,
   TokenResponse,
 } from '../types/BattleNet';
-import { checkIfImageExist, delay, downloadImage, rgbaToHex, toDashes, uploadImage } from '../utils/utils';
-import { DynamoInstance } from '../types/DynamoDb';
+import {
+  checkIfImageExist,
+  chunkArray,
+  delay,
+  downloadImage,
+  rgbaToHex,
+  toDashes,
+  toUnderscores,
+  uploadImage,
+} from '../utils/utils';
+import { DynamoInstance, Talent, Talents as DynamoTalents } from '../types/DynamoDb';
 
 class BattleNetApi {
   private static instance: BattleNetApi;
@@ -94,10 +107,11 @@ class BattleNetApi {
     });
 
     if (!response.ok) {
-      console.log(`Token: `, token);
-      console.log('resp', await response.text());
-      console.log('namespace', namespace);
-      throw new Error(`API request failed: ${response.statusText}`);
+      console.error(
+        `API request failed: ${response.status} ${response.statusText}`,
+        JSON.stringify({ url, namespace, body: await response.text() }),
+      );
+      throw new Error(`API request failed: ${response.status} ${response.statusText} for ${url}`);
     }
 
     return response;
@@ -119,10 +133,13 @@ class BattleNetApi {
       return { key: asset.key, filename };
     });
     const results = await Promise.all(uploadPromises);
-    return results.reduce((mediaMap, { key, filename }) => {
-      mediaMap[key] = filename;
-      return mediaMap;
-    }, {} as Record<string, string>);
+    return results.reduce(
+      (mediaMap, { key, filename }) => {
+        mediaMap[key] = filename;
+        return mediaMap;
+      },
+      {} as Record<string, string>,
+    );
   }
 
   private async fetchJournalMedia(
@@ -185,14 +202,18 @@ class BattleNetApi {
         const socketMediaUrl = socket.media?.key.href;
         let processedImage: string | undefined = undefined;
         if (socketMediaUrl) {
-          const socketImagesResp = await this.makeRequest(socket.media.key.href, 'GET', false, token);
-          const socketJSON = (await socketImagesResp.json()) as MediaResponse;
-          if (socketJSON.assets?.length) {
-            const socketImage = socketJSON.assets[0];
-            const ext = socketImage.value.split('.').pop()?.toLowerCase() || 'jpg';
-            const socketFilename = `${itemId}-${socket.socket_type.type}.${ext}`;
-            const socketS3Key = `sockets/${socketFilename}`;
-            processedImage = await this.processSocketMedia(socketImage.value, socketS3Key, client);
+          try {
+            const socketImagesResp = await this.makeRequest(socket.media.key.href, 'GET', false, token);
+            const socketJSON = (await socketImagesResp.json()) as MediaResponse;
+            if (socketJSON.assets?.length) {
+              const socketImage = socketJSON.assets[0];
+              const ext = socketImage.value.split('.').pop()?.toLowerCase() || 'jpg';
+              const socketFilename = `${itemId}-${socket.socket_type.type}.${ext}`;
+              const socketS3Key = `sockets/${socketFilename}`;
+              processedImage = await this.processSocketMedia(socketImage.value, socketS3Key, client);
+            }
+          } catch (err) {
+            console.error(`Failed to fetch socket media for item ${itemId}:`, err);
           }
         }
         return {
@@ -363,6 +384,193 @@ class BattleNetApi {
     }
   }
 
+  private async fetchTalentTreeIndex(region: string, baseUrl: string, token: string): Promise<TalentTreeIndex> {
+    const url = this.buildGameDataUrl(region, baseUrl, 'talent-tree/index');
+    const resp = await this.makeRequest(url, 'GET', true, token, `static-${region}`);
+    return (await resp.json()) as TalentTreeIndex;
+  }
+
+  private async fetchTalentTree(href: string, region: string, token: string): Promise<TalentTree> {
+    const resp = await this.makeRequest(href, 'GET', true, token, `static-${region}`);
+    return (await resp.json()) as TalentTree;
+  }
+
+  private async fetchSpellMedia(
+    region: string,
+    baseUrl: string,
+    spellId: number,
+    token: string,
+  ): Promise<MediaResponse | null> {
+    try {
+      const resp = await this.makeRequest(
+        `https://${region}.${baseUrl}/data/wow/media/spell/${spellId}`,
+        'GET',
+        true,
+        token,
+        `static-${region}`,
+      );
+      return (await resp.json()) as MediaResponse;
+    } catch (err) {
+      console.error(`Failed to fetch media for spell ${spellId}:`, err);
+      return null;
+    }
+  }
+
+  // The panel renders every talent icon from talents/{spellId}.jpg, so pull down
+  // any icon that is not on the CDN yet. Existing icons are skipped, which keeps
+  // every run after the first one cheap.
+  private async cacheTalentIcons(
+    spellIds: number[],
+    region: string,
+    baseUrl: string,
+    token: string,
+  ): Promise<void> {
+    const client = BattleNetApi.getS3Client();
+    for (const batch of chunkArray([...new Set(spellIds)], 8)) {
+      await Promise.all(
+        batch.map(async (spellId) => {
+          const s3Key = `talents/${spellId}.jpg`;
+          try {
+            if (await checkIfImageExist(s3Key, client)) {
+              return;
+            }
+            const media = await this.fetchSpellMedia(region, baseUrl, spellId, token);
+            if (media?.assets?.length) {
+              await this.processMediaAssets(media.assets, () => s3Key, client);
+            }
+          } catch (err) {
+            // A missing icon degrades one talent, it must not fail the spec.
+            console.error(`Failed to cache icon for spell ${spellId}:`, err);
+          }
+        }),
+      );
+    }
+  }
+
+  // Blizzard nests `talent` beside `spell_tooltip`; the panel reads
+  // spell_tooltip.talent.id to decide whether a talent is selected, so lift it.
+  private mapTalentTooltip(tooltip: TalentTreeTooltip | undefined) {
+    if (!tooltip?.spell_tooltip) {
+      return null;
+    }
+    return {
+      spell_tooltip: {
+        ...tooltip.spell_tooltip,
+        talent: tooltip.talent,
+      },
+    };
+  }
+
+  private mapTalentNode(node: TalentTreeNode): Talent | null {
+    let isChoice = false;
+
+    const ranks = (node.ranks ?? [])
+      .map((rank) => {
+        const choices = rank.choice_of_tooltips ?? rank.tooltip?.choice_of_tooltips;
+
+        if (choices?.length) {
+          const mappedChoices = choices.map((choice) => this.mapTalentTooltip(choice)).filter((choice) => choice !== null);
+
+          if (mappedChoices.length === 0) {
+            return null;
+          }
+
+          isChoice = true;
+
+          return {
+            rank: rank.rank,
+            tooltip: {
+              ...mappedChoices[0],
+              choice_of_tooltips: mappedChoices,
+            },
+          };
+        }
+
+        const tooltip = this.mapTalentTooltip(rank.tooltip);
+        return tooltip ? { rank: rank.rank, tooltip } : null;
+      })
+      .filter((rank) => rank !== null);
+
+    if (ranks.length === 0) {
+      return null;
+    }
+
+    // The panel only renders CHOICE, PASSIVE and ACTIVE nodes. Anything else
+    // Blizzard introduces falls back to ACTIVE so new nodes still show up
+    // rather than silently disappearing from the tree.
+    const nodeType = node.node_type?.type?.toUpperCase();
+    const type = isChoice ? 'CHOICE' : nodeType === 'PASSIVE' ? 'PASSIVE' : 'ACTIVE';
+
+    return {
+      id: node.id,
+      row: node.display_row ?? 0,
+      col: node.display_col ?? 0,
+      locked_by: node.locked_by ?? [],
+      unlocks: node.unlocks ?? [],
+      type,
+      ranks,
+    };
+  }
+
+  public async fetchTalents(region: string, baseUrl: string, token: string): Promise<DynamoTalents[]> {
+    const index = await this.fetchTalentTreeIndex(region, baseUrl, token);
+    const specs: DynamoTalents[] = [];
+
+    for (const specTree of index.spec_talent_trees ?? []) {
+      try {
+        const tree = await this.fetchTalentTree(specTree.key.href, region, token);
+
+        const className = tree.playable_class?.name;
+        const specName = tree.playable_specialization?.name ?? specTree.name;
+
+        if (!className || !specName) {
+          console.error(`Skipping talent tree ${specTree.id}: missing class or spec name.`);
+          continue;
+        }
+
+        const mapNodes = (nodes: TalentTreeNode[] | undefined): Talent[] =>
+          (nodes ?? []).map((node) => this.mapTalentNode(node)).filter((talent): talent is Talent => talent !== null);
+
+        const classTalents = mapNodes(tree.class_talent_nodes);
+        const specTalents = mapNodes(tree.spec_talent_nodes);
+        const heroTalents = (tree.hero_talent_trees ?? []).map((heroTree) => ({
+          id: heroTree.id,
+          name: heroTree.name,
+          talents: mapNodes(heroTree.hero_talent_nodes),
+        }));
+
+        const spellIds = [...classTalents, ...specTalents, ...heroTalents.flatMap((hero) => hero.talents)].flatMap(
+          (talent) =>
+            talent.ranks.flatMap((rank) => {
+              const tooltips = rank.tooltip?.choice_of_tooltips ?? (rank.tooltip ? [rank.tooltip] : []);
+              return tooltips
+                .map((tooltip) => tooltip.spell_tooltip?.spell?.id)
+                .filter((id): id is number => typeof id === 'number');
+            }),
+        );
+
+        await this.cacheTalentIcons(spellIds, region, baseUrl, token);
+
+        specs.push({
+          // Must match the key the panel builds: spec lowercased, class
+          // lowercased with spaces turned into underscores.
+          spec: `${specName.toLowerCase()}-${toUnderscores(className.toLowerCase())}`,
+          class: toUnderscores(className.toLowerCase()),
+          class_talents: classTalents,
+          spec_talents: specTalents,
+          hero_talents: heroTalents,
+        });
+
+        await delay(200);
+      } catch (err) {
+        // One bad spec must not lose the other 38.
+        console.error(`Failed to build talents for tree ${specTree.id} (${specTree.name}):`, err);
+      }
+    }
+
+    return specs;
+  }
+
   private async fetchJournalInstancesIndex(region: string, baseUrl: string, token: string): Promise<JournalIndex> {
     const url = this.buildGameDataUrl(region, baseUrl, 'journal-instance/index');
     try {
@@ -447,22 +655,27 @@ class BattleNetApi {
         data.expansions?.map((expansion) => ({
           name: expansion.expansion.name,
           id: expansion.expansion.id,
-          instances: expansion.instances?.map((instance) => ({
-            name: instance.instance.name,
-            id: instance.instance.id,
-            modes: instance.modes?.map((mode) => ({
-              [mode.difficulty.type]: {
-                status: mode.status.type,
-                progress: {
-                  completed: mode.progress.completed_count,
-                },
-                encounters: Object.fromEntries(
-                  mode.progress.encounters?.map((encounter) => [encounter.encounter.id, encounter.completed_count]),
-                ),
-              },
-            })),
-          })),
-        })) || null,
+          instances:
+            expansion.instances?.map((instance) => ({
+              name: instance.instance.name,
+              id: instance.instance.id,
+              modes:
+                instance.modes?.map((mode) => ({
+                  [mode.difficulty.type]: {
+                    status: mode.status.type,
+                    progress: {
+                      completed: mode.progress.completed_count,
+                    },
+                    encounters: Object.fromEntries(
+                      mode.progress.encounters?.map((encounter) => [
+                        encounter.encounter.id,
+                        encounter.completed_count,
+                      ]) ?? [],
+                    ),
+                  },
+                })) ?? [],
+            })) ?? [],
+        })) ?? [],
     };
   }
 
@@ -535,8 +748,8 @@ class BattleNetApi {
             requirement: item.requirements?.level?.display_string
               ? item.requirements.level.display_string
               : item.requirements?.display_string
-              ? item.requirements.display_string
-              : null,
+                ? item.requirements.display_string
+                : null,
             level: item.level?.value || null,
             transmog: item.transmog?.item.name || null,
           },
@@ -545,10 +758,13 @@ class BattleNetApi {
 
       const itemsArray = await Promise.all(itemPromises);
       const equippedItems = Object.assign({}, ...itemsArray);
-      const defaultSlots = Object.values(Slots).reduce((acc, slot) => {
-        acc[slot] = null;
-        return acc;
-      }, {} as Record<string, null>);
+      const defaultSlots = Object.values(Slots).reduce(
+        (acc, slot) => {
+          acc[slot] = null;
+          return acc;
+        },
+        {} as Record<string, null>,
+      );
       const items: ApiItems = { ...defaultSlots, ...equippedItems };
       return items;
     } catch (err) {

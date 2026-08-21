@@ -40,6 +40,7 @@ export type DynamoInstance = {
 
 export type DynamoCharacter = {
   character_id: number;
+  forced_update?: string;
   achievement_points: number;
   avatar: string;
   avg_item_level: number;
@@ -121,34 +122,33 @@ export type Talent = {
   type: string;
 };
 
+// Blizzard returns `talent` as a sibling of `spell_tooltip` and puts
+// choice_of_tooltips at the rank level. The panel reads spell_tooltip.talent.id
+// and rank.tooltip.choice_of_tooltips, so UpdateTalents reshapes the payload on
+// the way in and this type describes what is actually persisted.
+type TalentSpellTooltip = {
+  spell: Spell;
+  description: string;
+  cast_time?: string;
+  cooldown?: string;
+  range?: string;
+  power_cost?: string;
+  talent?: {
+    name: string;
+    key: {
+      href: string;
+    };
+    id: number;
+  };
+};
+
 type Rank = {
   rank: number;
-  choice_of_tooltips?: {
-    spell_tooltip: {
-      spell: Spell;
-      description: string;
-      cast_time: string;
-      cooldown?: string;
-      range?: string;
-      power_cost?: string;
-    };
-  };
   tooltip?: {
-    spell_tooltip: {
-      spell: Spell;
-      description: string;
-      cast_time: string;
-      cooldown?: string;
-      range?: string;
-      power_cost?: string;
-    };
-    talent: {
-      name: string;
-      key: {
-        href: string;
-      };
-      id: number;
-    };
+    spell_tooltip: TalentSpellTooltip;
+    choice_of_tooltips?: {
+      spell_tooltip: TalentSpellTooltip;
+    }[];
   };
 };
 

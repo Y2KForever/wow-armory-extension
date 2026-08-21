@@ -10,8 +10,6 @@ import {
   QueryCommandInput,
   TransactWriteItemsCommand,
   TransactWriteItemsInput,
-  UpdateItemCommand,
-  UpdateItemCommandInput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { middyCore } from '../utils/middyWrapper';
@@ -59,7 +57,7 @@ const processCharacter = async (
       return null;
     }
 
-    const [mediaData, items, summary, talents] = await Promise.all([
+    const [mediaData, items, summary, talents, raids] = await Promise.all([
       BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl, token),
@@ -67,7 +65,7 @@ const processCharacter = async (
       BattleNetApiManager.fetchCharacterRaids(apiChar, character.region, baseUrl, token),
     ]);
 
-    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents };
+    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents, ...raids };
   } catch (err) {
     console.error(`Error processing character ${character.character_id}:`, err);
     throw err;
@@ -140,22 +138,29 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
 
   const user = unmarshall(fetchUser.Item) as ddbProfile;
 
-  if (user.forced_update > now) {
+  const characterId = event.queryStringParameters?.characterId;
+
+  if (!characterId) {
+    return ApiResult(400, JSON.stringify({ error: 'No characterId supplied' }));
+  }
+
+  const allCharacters = await getCharactersForUser(parseInt(userId));
+
+  if (allCharacters.length === 0) {
+    return ApiResult(400, JSON.stringify({ error: 'No characters found.' }));
+  }
+
+  const targetCharacter = allCharacters.find((character) => character.character_id.toString() === characterId);
+
+  if (!targetCharacter) {
+    return ApiResult(404, JSON.stringify({ error: `No character found with character id: ${characterId}` }));
+  }
+
+  if (targetCharacter.forced_update && targetCharacter.forced_update > now) {
     return ApiResult(400, JSON.stringify({ error: 'Not allowed to force update yet' }));
   }
 
-  const characterFetchPromise = getCharactersForUser(parseInt(userId));
-  const charactersPerUser = await Promise.all([characterFetchPromise]);
-
-  const allCharacters = charactersPerUser.flat();
-
-  if (allCharacters.length === 0) {
-    throw new Error(`No characters found.`);
-  }
-
-  const processedCharacters = await Promise.all(
-    allCharacters.map((character) => processCharacter(character, baseUrl, user.state)),
-  );
+  const processedCharacters = await Promise.all([processCharacter(targetCharacter, baseUrl, user.state)]);
 
   const validCharacters = processedCharacters.filter((character) => character !== null);
 
@@ -174,6 +179,8 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     },
   }));
 
+  const forcedUpdate = new Date(new Date(now).getTime() + 60 * 60 * 1000).toISOString();
+
   const characterTransactItems = validCharacters.map((character) => ({
     Put: {
       TableName: 'wow-extension-characters',
@@ -185,6 +192,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
         user_id: { N: character.user_id.toString() },
         region: { S: character.region },
         updated_at: { S: now },
+        forced_update: { S: forcedUpdate },
       },
     },
   }));
@@ -208,26 +216,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
   }
 
   try {
-    const updateUserParams: UpdateItemCommandInput = {
-      TableName: 'wow-extension-profiles',
-      Key: {
-        user_id: { N: userId },
-      },
-      UpdateExpression: `SET forced_update = :new`,
-      ExpressionAttributeValues: {
-        ':new': { S: new Date(new Date().getTime() + 60 * 60 * 1000).toISOString() },
-      },
-      ReturnValues: 'ALL_NEW',
-    };
-
-    const { Attributes } = await ddbClient.send(new UpdateItemCommand(updateUserParams));
-
-    if (!Attributes) {
-      return ApiResult(500, JSON.stringify({ error: 'something went wrong' }));
-    }
-
-    const attributes = unmarshall(Attributes) as ddbProfile;
-
     const queryCharacterParams: QueryCommandInput = {
       TableName: 'wow-extension-characters',
       KeyConditionExpression: '#userId = :userId',
@@ -247,12 +235,12 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     return ApiResult(
       200,
       JSON.stringify({
-        userId: attributes.user_id,
-        createdAt: attributes.created_at,
-        updatedAt: attributes.updated_at,
-        region: attributes.region,
-        forcedUpdate: attributes.forced_update,
-        authorized: Math.floor(Date.now() / 1000) < attributes.expires_in,
+        userId: user.user_id,
+        createdAt: user.created_at,
+        updatedAt: now,
+        region: user.region,
+        forcedUpdate: user.forced_update,
+        authorized: Math.floor(Date.now() / 1000) < user.expires_in,
         characters: characters,
       }),
     );

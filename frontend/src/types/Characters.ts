@@ -67,25 +67,28 @@ type ApiCharacter = {
   equip_item_level: number;
   dead: boolean | null;
   self_found: boolean | null;
-  raids: {
-    id: number;
-    name: string;
-    instances: {
-      id: number;
-      name: string;
-      modes: {
-        [mode: string]: {
-          encounters: {
-            [id: number]: number;
-          };
-          progress: {
-            completed: number;
-          };
-          status: string;
-        };
-      }[];
-    }[];
-  }[];
+  forced_update?: string;
+  raids?:
+    | {
+        id: number;
+        name: string;
+        instances: {
+          id: number;
+          name: string;
+          modes: {
+            [mode: string]: {
+              encounters: {
+                [id: number]: number;
+              };
+              progress: {
+                completed: number;
+              };
+              status: string;
+            };
+          }[];
+        }[];
+      }[]
+    | null;
   talents: {
     class_talents: number[];
     hero_id: number;

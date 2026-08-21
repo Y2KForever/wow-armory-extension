@@ -25,7 +25,7 @@ const getApiRaid = (selectInstances: RaidsByExpansion[] | undefined, instanceId:
 };
 
 const getCharacterInstance = (character: ApiCharacter, raidId: number, instanceId: number) => {
-  const charRaid = character.raids.find((raid) => raid.id === raidId);
+  const charRaid = character.raids?.find((raid) => raid.id === raidId);
   return charRaid?.instances.find((instance) => instance.id === instanceId);
 };
 

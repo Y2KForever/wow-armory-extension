@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ApiCharacter, TalentType, UniqueTalent } from '@/types/Characters';
 
@@ -9,9 +9,36 @@ interface ITalentGroupProps {
 }
 
 export const TalentGroup = ({ talents, character, type }: ITalentGroupProps) => {
+  // Blizzard's row/col are absolute coordinates shared across the whole talent
+  // UI and they shift whenever a tree is reworked. Normalising to this group's
+  // own bounds means the tree renders compactly whatever numbers come back, and
+  // driving the grid with inline styles means any coordinate works without a
+  // matching Tailwind class having to exist at build time.
+  const bounds = useMemo(() => {
+    if (talents.length === 0) {
+      return { minRow: 1, minCol: 1, rows: 1, cols: 1 };
+    }
+    const rowValues = talents.map((talent) => talent.row);
+    const colValues = talents.map((talent) => talent.col);
+    const minRow = Math.min(...rowValues);
+    const minCol = Math.min(...colValues);
+    return {
+      minRow,
+      minCol,
+      rows: Math.max(...rowValues) - minRow + 1,
+      cols: Math.max(...colValues) - minCol + 1,
+    };
+  }, [talents]);
+
   return (
     <div className="flex flex-col items-center w-full h-full">
-      <div className="grid max-w-[290px] p-3 rounded-md bg-black justify-center">
+      <div
+        className="grid max-w-[290px] p-3 rounded-md bg-black justify-center"
+        style={{
+          gridTemplateColumns: `repeat(${bounds.cols}, minmax(0, auto))`,
+          gridTemplateRows: `repeat(${bounds.rows}, minmax(0, auto))`,
+        }}
+      >
         <TooltipProvider delayDuration={0}>
           {talents.map((talentGroup, idx) => {
             const speccedSpells = talentGroup.spells.filter((spell) =>
@@ -20,7 +47,13 @@ export const TalentGroup = ({ talents, character, type }: ITalentGroupProps) => 
 
             return (
               <Tooltip key={`${talentGroup}-${idx}`}>
-                <div className={`m-1 row-start-${talentGroup.row} col-start-${talentGroup.col}`}>
+                <div
+                  className="m-1"
+                  style={{
+                    gridRowStart: talentGroup.row - bounds.minRow + 1,
+                    gridColumnStart: talentGroup.col - bounds.minCol + 1,
+                  }}
+                >
                   <TooltipContent className="max-w-[200px] p-2">
                     <div className="flex items-center flex-col">
                       {speccedSpells.length > 0 || talentGroup.spells.length !== 2

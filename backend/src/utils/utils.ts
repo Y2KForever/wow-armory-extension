@@ -2,7 +2,7 @@ import { APIGatewayProxyEventHeaders, APIGatewayProxyEventV2 } from 'aws-lambda'
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
-import { JWT } from '../types/Twitch';
+import { JWT } from '../types/twitch';
 import { getTwitchExtensionSecret } from './secretsManager';
 import { ApiResultResponse } from '../types/Api';
 import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -72,15 +72,17 @@ export const convertToDynamoDBFormat = (data: any, isNested: boolean = false): a
   }
 };
 
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Token,X-User-Id,X-Region',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTION',
+};
+
 export const ApiResult = (status: number, body: string): ApiResultResponse => {
   return {
     statusCode: status,
     body: body,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Token,X-User-Id,X-Region',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTION',
-    },
+    headers: { ...corsHeaders },
   };
 };
 
