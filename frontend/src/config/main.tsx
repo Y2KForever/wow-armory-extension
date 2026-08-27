@@ -6,6 +6,9 @@ import { store } from '../store/store';
 import { Provider } from 'react-redux';
 import App from './App.tsx';
 import { ThemeProvider } from '@/components/ThemeProvider.tsx';
+import { installTwitchDevMock } from '@/dev/twitchMock';
+
+installTwitchDevMock();
 
 createRoot(document.getElementById('root-config')!).render(
   <StrictMode>

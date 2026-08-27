@@ -5,3 +5,19 @@ body,
   min-height: 500px;
   overflow-x: hidden;
 }
+
+#root .simplebar-track.simplebar-vertical {
+  width: 9px;
+  background: rgba(138, 109, 20, 0.1);
+}
+
+#root .simplebar-scrollbar::before {
+  background: #e8e4da;
+  left: 2px;
+  right: 2px;
+  border-radius: 4px;
+}
+
+#root .simplebar-scrollbar.simplebar-visible::before {
+  opacity: 0.6;
+}

@@ -1,4 +1,4 @@
-import { ApiResult, controlHeaders, simplifyDynamoDBResponse, verifyJwt } from '../utils/utils';
+import { ApiResult, controlHeaders, getBlizzardAppToken, simplifyDynamoDBResponse, verifyJwt } from '../utils/utils';
 import { ApiCharacter } from '../types/Api';
 import {
   DeleteItemCommand,
@@ -57,15 +57,27 @@ const processCharacter = async (
       return null;
     }
 
-    const [mediaData, items, summary, talents, raids] = await Promise.all([
+    const [mediaData, items, summary, talents, raids, dungeons, keystone] = await Promise.all([
       BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterSpecializations(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterRaids(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterDungeons(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterMythicKeystone(apiChar, character.region, baseUrl, token),
     ]);
 
-    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents, ...raids };
+    return {
+      ...character,
+      ...mediaData,
+      ...items,
+      ...summary,
+      is_valid: isValid.is_valid,
+      ...talents,
+      ...raids,
+      ...dungeons,
+      ...keystone,
+    };
   } catch (err) {
     console.error(`Error processing character ${character.character_id}:`, err);
     throw err;
@@ -160,7 +172,9 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     return ApiResult(400, JSON.stringify({ error: 'Not allowed to force update yet' }));
   }
 
-  const processedCharacters = await Promise.all([processCharacter(targetCharacter, baseUrl, user.state)]);
+  const appToken = await getBlizzardAppToken();
+
+  const processedCharacters = await Promise.all([processCharacter(targetCharacter, baseUrl, appToken)]);
 
   const validCharacters = processedCharacters.filter((character) => character !== null);
 

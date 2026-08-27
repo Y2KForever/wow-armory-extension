@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
 import { JWT } from '../types/twitch';
-import { getTwitchExtensionSecret } from './secretsManager';
+import { getClientCredentials, getTwitchExtensionSecret } from './secretsManager';
 import { ApiResultResponse } from '../types/Api';
 import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import {
@@ -94,6 +94,9 @@ export const parseCustomDate = (dateStr: string): Date => {
 export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const controlHeaders = (headers: APIGatewayProxyEventHeaders, requiredHeaders: string[]): Boolean => {
+  if (!headers) {
+    return false;
+  }
   for (const header of requiredHeaders) {
     if (!headers[header]) {
       return false;
@@ -242,4 +245,25 @@ export const executeTransaction = async (ddbClient: DynamoDBClient, params: Tran
     }
   }
   throw new Error('Max retries exceeded');
+};
+
+export const getBlizzardAppToken = async (): Promise<string> => {
+  const credentials = await getClientCredentials();
+  const basic = Buffer.from(`${credentials.client_id}:${credentials.client_secret}`).toString('base64');
+
+  const response = await fetch('https://oauth.battle.net/token', {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${basic}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to obtain Blizzard app token: ${response.status} ${response.statusText}`);
+  }
+
+  const token = (await response.json()) as { access_token: string };
+  return token.access_token;
 };

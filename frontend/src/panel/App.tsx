@@ -29,7 +29,7 @@ const App: React.FC = () => {
   return (
     <TwitchAuthContext.Provider value={twitchAuth}>
       <Toaster richColors closeButton visibleToasts={1} position="top-center" theme={'light'} />
-      <div className="min-h-[500px] bg-backgroundBlizzard flex">
+      <div className="min-h-[500px] w-full bg-blizzard-ground flex">
         <AnimatePresence mode="sync">
           <Panel />
         </AnimatePresence>

@@ -354,8 +354,6 @@ export type TalentTreeIndex = {
   }[];
 };
 
-// Blizzard returns `talent` as a sibling of `spell_tooltip`; the panel reads it
-// from inside `spell_tooltip`, so UpdateTalents lifts it across when mapping.
 export type TalentTreeTooltip = {
   talent?: {
     name: string;
@@ -413,5 +411,38 @@ export type TalentTree = {
     id: number;
     name: string;
     hero_talent_nodes?: TalentTreeNode[];
+  }[];
+};
+
+export type MythicKeystoneProfile = {
+  current_mythic_rating?: {
+    color?: { r: number; g: number; b: number; a: number };
+    rating: number;
+  };
+  seasons?: {
+    id: number;
+    key: { href: string };
+  }[];
+};
+
+export type MythicKeystoneSeason = {
+  season: { id: number };
+  best_runs?: {
+    completed_timestamp: number;
+    duration: number;
+    keystone_level: number;
+    keystone_affixes?: { name: string; id: number }[];
+    dungeon: { id: number; name: string };
+    is_completed_within_time: boolean;
+    mythic_rating?: { rating: number };
+  }[];
+};
+
+export type MythicKeystoneDungeon = {
+  id: number;
+  name: string;
+  keystone_upgrades?: {
+    upgrade_level: number;
+    qualifying_duration: number;
   }[];
 };

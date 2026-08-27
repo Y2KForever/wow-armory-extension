@@ -9,11 +9,6 @@ interface ITalentGroupProps {
 }
 
 export const TalentGroup = ({ talents, character, type }: ITalentGroupProps) => {
-  // Blizzard's row/col are absolute coordinates shared across the whole talent
-  // UI and they shift whenever a tree is reworked. Normalising to this group's
-  // own bounds means the tree renders compactly whatever numbers come back, and
-  // driving the grid with inline styles means any coordinate works without a
-  // matching Tailwind class having to exist at build time.
   const bounds = useMemo(() => {
     if (talents.length === 0) {
       return { minRow: 1, minCol: 1, rows: 1, cols: 1 };

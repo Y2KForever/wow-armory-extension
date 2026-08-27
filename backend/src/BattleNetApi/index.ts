@@ -4,8 +4,10 @@ import {
   ApiCharacterStatus,
   ApiCharacterSummary,
   ApiCharacterTalents,
+  ApiDungeons,
   ApiInstance,
   ApiItems,
+  ApiMythicKeystone,
   ApiRaids,
 } from '../types/Api';
 import {
@@ -17,6 +19,9 @@ import {
   JournalIndex,
   JournalInstance,
   MediaResponse,
+  MythicKeystoneDungeon,
+  MythicKeystoneProfile,
+  MythicKeystoneSeason,
   Raids,
   Slots,
   Talents,
@@ -416,15 +421,7 @@ class BattleNetApi {
     }
   }
 
-  // The panel renders every talent icon from talents/{spellId}.jpg, so pull down
-  // any icon that is not on the CDN yet. Existing icons are skipped, which keeps
-  // every run after the first one cheap.
-  private async cacheTalentIcons(
-    spellIds: number[],
-    region: string,
-    baseUrl: string,
-    token: string,
-  ): Promise<void> {
+  private async cacheTalentIcons(spellIds: number[], region: string, baseUrl: string, token: string): Promise<void> {
     const client = BattleNetApi.getS3Client();
     for (const batch of chunkArray([...new Set(spellIds)], 8)) {
       await Promise.all(
@@ -439,7 +436,6 @@ class BattleNetApi {
               await this.processMediaAssets(media.assets, () => s3Key, client);
             }
           } catch (err) {
-            // A missing icon degrades one talent, it must not fail the spec.
             console.error(`Failed to cache icon for spell ${spellId}:`, err);
           }
         }),
@@ -447,8 +443,6 @@ class BattleNetApi {
     }
   }
 
-  // Blizzard nests `talent` beside `spell_tooltip`; the panel reads
-  // spell_tooltip.talent.id to decide whether a talent is selected, so lift it.
   private mapTalentTooltip(tooltip: TalentTreeTooltip | undefined) {
     if (!tooltip?.spell_tooltip) {
       return null;
@@ -469,7 +463,9 @@ class BattleNetApi {
         const choices = rank.choice_of_tooltips ?? rank.tooltip?.choice_of_tooltips;
 
         if (choices?.length) {
-          const mappedChoices = choices.map((choice) => this.mapTalentTooltip(choice)).filter((choice) => choice !== null);
+          const mappedChoices = choices
+            .map((choice) => this.mapTalentTooltip(choice))
+            .filter((choice) => choice !== null);
 
           if (mappedChoices.length === 0) {
             return null;
@@ -495,9 +491,6 @@ class BattleNetApi {
       return null;
     }
 
-    // The panel only renders CHOICE, PASSIVE and ACTIVE nodes. Anything else
-    // Blizzard introduces falls back to ACTIVE so new nodes still show up
-    // rather than silently disappearing from the tree.
     const nodeType = node.node_type?.type?.toUpperCase();
     const type = isChoice ? 'CHOICE' : nodeType === 'PASSIVE' ? 'PASSIVE' : 'ACTIVE';
 
@@ -552,8 +545,6 @@ class BattleNetApi {
         await this.cacheTalentIcons(spellIds, region, baseUrl, token);
 
         specs.push({
-          // Must match the key the panel builds: spec lowercased, class
-          // lowercased with spaces turned into underscores.
           spec: `${specName.toLowerCase()}-${toUnderscores(className.toLowerCase())}`,
           class: toUnderscores(className.toLowerCase()),
           class_talents: classTalents,
@@ -563,7 +554,6 @@ class BattleNetApi {
 
         await delay(200);
       } catch (err) {
-        // One bad spec must not lose the other 38.
         console.error(`Failed to build talents for tree ${specTree.id} (${specTree.name}):`, err);
       }
     }
@@ -646,37 +636,142 @@ class BattleNetApi {
     baseUrl: string,
     token: string,
   ): Promise<ApiRaids> {
-    const url = this.buildCharacterUrl(character, region, baseUrl, 'encounters/raids');
-    const resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
-    const data = (await resp.json()) as Raids;
+    return { raids: await this.fetchEncounters(character, region, baseUrl, token, 'raids') };
+  }
 
-    return {
-      raids:
+  public async fetchCharacterDungeons(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+  ): Promise<ApiDungeons> {
+    return { dungeons: await this.fetchEncounters(character, region, baseUrl, token, 'dungeons') };
+  }
+
+  private async fetchEncounters(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+    kind: 'raids' | 'dungeons',
+  ): Promise<ApiRaids['raids']> {
+    try {
+      const url = this.buildCharacterUrl(character, region, baseUrl, `encounters/${kind}`);
+      const resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
+      const data = (await resp.json()) as Raids;
+
+      return (
         data.expansions?.map((expansion) => ({
           name: expansion.expansion.name,
           id: expansion.expansion.id,
-          instances:
-            expansion.instances?.map((instance) => ({
-              name: instance.instance.name,
-              id: instance.instance.id,
-              modes:
-                instance.modes?.map((mode) => ({
-                  [mode.difficulty.type]: {
-                    status: mode.status.type,
-                    progress: {
-                      completed: mode.progress.completed_count,
-                    },
-                    encounters: Object.fromEntries(
-                      mode.progress.encounters?.map((encounter) => [
-                        encounter.encounter.id,
-                        encounter.completed_count,
-                      ]) ?? [],
-                    ),
-                  },
-                })) ?? [],
-            })) ?? [],
-        })) ?? [],
-    };
+          instances: (expansion.instances ?? []).map((instance) => ({
+            name: instance.instance.name,
+            id: instance.instance.id,
+            modes: (instance.modes ?? [])
+              .filter((mode) => typeof mode.difficulty?.type === 'string' && mode.difficulty.type.length > 0)
+              .map((mode) => ({
+                [mode.difficulty.type]: {
+                  encounters: Object.fromEntries(
+                    (mode.progress.encounters ?? []).map((encounter) => [
+                      encounter.encounter.id,
+                      encounter.completed_count,
+                    ]),
+                  ),
+                },
+              })),
+          })),
+        })) ?? []
+      );
+    } catch (err) {
+      console.error(`Failed to fetch ${kind} encounters for ${character.name}:`, err);
+      return [];
+    }
+  }
+
+  private keystoneTimers = new Map<number, number[]>();
+
+  private async fetchKeystoneUpgrades(region: string, baseUrl: string, dungeonId: number, token: string) {
+    const cached = this.keystoneTimers.get(dungeonId);
+    if (cached) return cached;
+
+    try {
+      const resp = await this.makeRequest(
+        `https://${region}.${baseUrl}/data/wow/mythic-keystone/dungeon/${dungeonId}`,
+        'GET',
+        true,
+        token,
+        `dynamic-${region}`,
+      );
+      const data = (await resp.json()) as MythicKeystoneDungeon;
+      const timers = (data.keystone_upgrades ?? [])
+        .sort((a, b) => b.upgrade_level - a.upgrade_level)
+        .map((upgrade) => upgrade.qualifying_duration);
+      this.keystoneTimers.set(dungeonId, timers);
+      return timers;
+    } catch (err) {
+      console.error(`Failed to fetch keystone upgrades for dungeon ${dungeonId}:`, err);
+      this.keystoneTimers.set(dungeonId, []);
+      return [];
+    }
+  }
+
+  public async fetchCharacterMythicKeystone(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+  ): Promise<ApiMythicKeystone> {
+    try {
+      const profileUrl = this.buildCharacterUrl(character, region, baseUrl, 'mythic-keystone-profile');
+      const namespace = this.getNamespace(character, region);
+      const profileResp = await this.makeRequest(profileUrl, 'GET', true, token, namespace);
+      const profile = (await profileResp.json()) as MythicKeystoneProfile;
+
+      const latest = (profile.seasons ?? []).reduce<number | null>(
+        (best, season) => (best === null || season.id > best ? season.id : best),
+        null,
+      );
+
+      if (latest === null) {
+        return { mythic_keystone: null };
+      }
+
+      const seasonResp = await this.makeRequest(`${profileUrl}/season/${latest}`, 'GET', true, token, namespace);
+      const season = (await seasonResp.json()) as MythicKeystoneSeason;
+
+      const runs = await Promise.all(
+        (season.best_runs ?? []).map(async (run) => {
+          const timers = await this.fetchKeystoneUpgrades(region, baseUrl, run.dungeon.id, token);
+          const beaten = timers.filter((timer) => run.duration <= timer).length;
+
+          const affixes = (run.keystone_affixes ?? []).map((affix) => affix.name.toLowerCase());
+          const affix = affixes.find((name) => name === 'fortified' || name === 'tyrannical') ?? '';
+
+          return {
+            dungeon_id: run.dungeon.id,
+            dungeon: run.dungeon.name,
+            affix,
+            level: run.keystone_level,
+            duration: run.duration,
+            timed: run.is_completed_within_time,
+            upgrades: timers.length ? beaten : run.is_completed_within_time ? 1 : 0,
+            rating: Math.round(run.mythic_rating?.rating ?? 0),
+            completed_at: run.completed_timestamp,
+          };
+        }),
+      );
+
+      return {
+        mythic_keystone: {
+          season_id: latest,
+          rating: Math.round(profile.current_mythic_rating?.rating ?? 0),
+          runs,
+        },
+      };
+    } catch (err) {
+      console.error(`Failed to fetch mythic keystone profile for ${character.name}:`, err);
+      return { mythic_keystone: null };
+    }
   }
 
   public async fetchCharacterItems(
