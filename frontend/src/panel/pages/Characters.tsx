@@ -1,37 +1,64 @@
 import { motion } from 'framer-motion';
+import { useMemo } from 'react';
 import { ApiCharacter } from '@/types/Characters';
 import { Views } from '@/types/User';
-import { Characters } from '../components/Characters';
+import { RealmGroup } from '../components/Characters';
+import { WowIcon } from '@/assets/icons/WowIcon';
 
 interface IListViewProps {
   characters: ApiCharacter[];
   setView: React.Dispatch<React.SetStateAction<Views>>;
-  setCharacter: React.Dispatch<React.SetStateAction<ApiCharacter | null>>;
+  setCharacter: (character: ApiCharacter | null) => void;
 }
 
+export const RosterHeader = ({ characters }: { characters: ApiCharacter[] }) => {
+  const realmCount = useMemo(() => new Set(characters.map((character) => character.realm_name)).size, [characters]);
+
+  return (
+    <div className="flex items-center w-full h-full gap-[8px] px-[10px]">
+      <WowIcon className="flex-none w-[16px] h-[16px] fill-blizzard-gold-dim" />
+      <span className="text-[11.5px] font-semibold tracking-[.16em] text-blizzard-yellow">ROSTER</span>
+      <span className="ml-auto text-[11px] font-medium text-blizzard-gold-mute">
+        {characters.length} character{characters.length === 1 ? '' : 's'} &middot; {realmCount} realm
+        {realmCount === 1 ? '' : 's'}
+      </span>
+    </div>
+  );
+};
+
 export const CharactersView = ({ characters, setView, setCharacter }: IListViewProps) => {
+  const groups = useMemo(() => {
+    const byRealm = new Map<string, ApiCharacter[]>();
+    for (const character of characters) {
+      const realm = character.realm_name ?? '';
+      if (!byRealm.has(realm)) {
+        byRealm.set(realm, []);
+      }
+      byRealm.get(realm)?.push(character);
+    }
+    return [...byRealm.entries()];
+  }, [characters]);
+
   return (
     <motion.div
       key={'list'}
-      className="flex flex-col w-full"
+      className="flex flex-col w-full font-semplicita no-scrollbar"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex flex-col w-full font-semplicita no-scrollbar">
-        {characters.map((char) => (
-          <div
-            key={char.character_id}
-            onClick={() => {
-              setCharacter(char);
-              setView(Views.CHARACTER);
-            }}
-          >
-            <Characters character={char} />
-          </div>
-        ))}
-      </div>
+      {groups.map(([realm, realmCharacters]) => (
+        <RealmGroup
+          key={realm}
+          realm={realm}
+          characters={realmCharacters}
+          onSelect={(character) => {
+            setCharacter(character);
+            setView(Views.CHARACTER);
+          }}
+        />
+      ))}
     </motion.div>
   );
 };

@@ -67,25 +67,56 @@ type ApiCharacter = {
   equip_item_level: number;
   dead: boolean | null;
   self_found: boolean | null;
-  raids: {
-    id: number;
-    name: string;
-    instances: {
-      id: number;
-      name: string;
-      modes: {
-        [mode: string]: {
-          encounters: {
-            [id: number]: number;
-          };
-          progress: {
-            completed: number;
-          };
-          status: string;
-        };
-      }[];
+  forced_update?: string;
+  mythic_keystone?: {
+    season_id: number;
+    rating: number;
+    runs: {
+      dungeon_id: number;
+      dungeon: string;
+      affix: string;
+      level: number;
+      duration: number;
+      timed: boolean;
+      upgrades: number;
+      rating: number;
+      completed_at: number;
     }[];
-  }[];
+  } | null;
+  dungeons?:
+    | {
+        id: number;
+        name: string;
+        instances: {
+          id: number;
+          name: string;
+          modes: {
+            [mode: string]: {
+              encounters: {
+                [id: number]: number;
+              };
+            };
+          }[];
+        }[];
+      }[]
+    | null;
+  raids?:
+    | {
+        id: number;
+        name: string;
+        instances: {
+          id: number;
+          name: string;
+          modes: {
+            [mode: string]: {
+              encounters: {
+                [id: number]: number;
+              };
+            };
+          }[];
+        }[];
+      }[]
+    | null;
   talents: {
     class_talents: number[];
     hero_id: number;
@@ -164,6 +195,29 @@ const slotsOrderRight: Slot[] = [
 ];
 
 const slotsOrderBottom: Slot[] = [Slot.MAIN_HAND, Slot.OFF_HAND];
+
+const slotAbbr: Record<string, string> = {
+  head: 'HEAD',
+  neck: 'NECK',
+  shoulder: 'SHLD',
+  back: 'BACK',
+  chest: 'CHST',
+  shirt: 'SHIRT',
+  tabard: 'TABARD',
+  wrist: 'WRST',
+  hands: 'HAND',
+  waist: 'WAIST',
+  legs: 'LEGS',
+  feet: 'FEET',
+  'finger-1': 'RING',
+  'finger-2': 'RING',
+  'trinket-1': 'TRKT',
+  'trinket-2': 'TRKT',
+  'main-hand': 'MAIN',
+  'off-hand': 'OFF',
+  ranged: 'RNGD',
+  relic: 'RELIC',
+};
 
 const typeMap: Record<string, string> = {
   'finger-1': 'ring',
@@ -305,6 +359,7 @@ export {
   slotsOrderBottom,
   Faction,
   typeMap,
+  slotAbbr,
   type Spell,
   TalentType,
   InstanceType,

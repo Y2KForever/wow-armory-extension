@@ -6,34 +6,18 @@ body,
   overflow-x: hidden;
 }
 
-.col-start-15 {
-  grid-column-start: 15;
+#root .simplebar-track.simplebar-vertical {
+  width: 9px;
+  background: rgba(138, 109, 20, 0.1);
 }
 
-.col-start-16 {
-  grid-column-start: 16;
+#root .simplebar-scrollbar::before {
+  background: #e8e4da;
+  left: 2px;
+  right: 2px;
+  border-radius: 4px;
 }
 
-.col-start-17 {
-  grid-column-start: 17;
+#root .simplebar-scrollbar.simplebar-visible::before {
+  opacity: 0.6;
 }
-
-.col-start-18 {
-  grid-column-start: 18;
-}
-
-.col-start-19 {
-  grid-column-start: 19;
-}
-
-.col-start-20 {
-  grid-column-start: 20;
-}
-
-.col-start-21 {
-  grid-column-start: 21;
-}
-
-/* .bg-transparent {
-  background-color: transparent;
-} */

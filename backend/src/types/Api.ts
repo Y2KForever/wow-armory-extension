@@ -117,8 +117,6 @@ export type ApiRaids = {
       id: number;
       modes: {
         [difficultyType: string]: {
-          status: string;
-          progress: { completed: number };
           encounters: Record<number, number>;
         };
       }[];
@@ -149,4 +147,26 @@ export type ApiInstance = {
   image: string;
   name: string;
   minimum_level: number;
+};
+
+export type ApiMythicKeystone = {
+  mythic_keystone: {
+    season_id: number;
+    rating: number;
+    runs: {
+      dungeon_id: number;
+      dungeon: string;
+      affix: string;
+      level: number;
+      duration: number;
+      timed: boolean;
+      upgrades: number;
+      rating: number;
+      completed_at: number;
+    }[];
+  } | null;
+};
+
+export type ApiDungeons = {
+  dungeons: ApiRaids['raids'];
 };

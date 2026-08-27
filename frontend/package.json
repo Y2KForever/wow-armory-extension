@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:token": "node ./scripts/dev-token.mjs",
     "build": "tsc -b && vite build",
     "release": "yarn build && ./scripts/zip.sh && yarn sync && yarn invalidate",
     "sync": "aws s3 sync ./dist s3://wow-extension-landing-page --exclude \"*\" --include \"landing.html\" --include \"assets/landing-*\" --include \"assets/main-*\"",
@@ -55,6 +56,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.0.12",
     "@types/react-color": "^3.0.13",
     "@types/react-dom": "^18.3.1",

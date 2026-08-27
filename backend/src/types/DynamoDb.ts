@@ -1,3 +1,4 @@
+import { ApiDungeons, ApiMythicKeystone } from './Api';
 import { Item } from './BattleNet';
 
 export type ddbProfile = {
@@ -40,6 +41,9 @@ export type DynamoInstance = {
 
 export type DynamoCharacter = {
   character_id: number;
+  forced_update?: string;
+  mythic_keystone?: ApiMythicKeystone['mythic_keystone'];
+  dungeons?: ApiDungeons['dungeons'];
   achievement_points: number;
   avatar: string;
   avg_item_level: number;
@@ -121,34 +125,29 @@ export type Talent = {
   type: string;
 };
 
+type TalentSpellTooltip = {
+  spell: Spell;
+  description: string;
+  cast_time?: string;
+  cooldown?: string;
+  range?: string;
+  power_cost?: string;
+  talent?: {
+    name: string;
+    key: {
+      href: string;
+    };
+    id: number;
+  };
+};
+
 type Rank = {
   rank: number;
-  choice_of_tooltips?: {
-    spell_tooltip: {
-      spell: Spell;
-      description: string;
-      cast_time: string;
-      cooldown?: string;
-      range?: string;
-      power_cost?: string;
-    };
-  };
   tooltip?: {
-    spell_tooltip: {
-      spell: Spell;
-      description: string;
-      cast_time: string;
-      cooldown?: string;
-      range?: string;
-      power_cost?: string;
-    };
-    talent: {
-      name: string;
-      key: {
-        href: string;
-      };
-      id: number;
-    };
+    spell_tooltip: TalentSpellTooltip;
+    choice_of_tooltips?: {
+      spell_tooltip: TalentSpellTooltip;
+    }[];
   };
 };
 

@@ -507,6 +507,7 @@ Resources:
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-raids'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-talents'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters/index/user_id-index'
                   - !Sub 'arn:aws:s3:::wow-extension-cdn/*'
               - Effect: 'Allow'
@@ -556,14 +557,40 @@ Resources:
     Metadata: *esbuild
     Properties:
       Handler: src/UpdateInstances/index.handler
-      Description: Updates instances once a month.
+      # Weekly on Wednesday afternoon. These jobs read the static-eu namespace,
+      # and EU realms only take a new build during Wednesday morning
+      # maintenance - Tuesday is the Americas reset, so it would still see the
+      # old build. Afternoon leaves room for extended patch-day maintenance.
+      Description: Updates instances every week, after EU maintenance.
       Timeout: 900
       Role: !GetAtt UpdateCharactersLambdaRole.Arn
       Events:
         CharacterUpdateSchedule:
           Type: ScheduleV2
           Properties:
-            ScheduleExpression: 'cron(15 0 1 * ? *)'
+            ScheduleExpression: 'cron(15 14 ? * WED *)'
+            ScheduleExpressionTimezone: Europe/London
+            RetryPolicy:
+              MaximumRetryAttempts: 0
+            FlexibleTimeWindow:
+              Mode: 'OFF'
+            RoleArn: !GetAtt UpdatesCharactersScheduleRole.Arn
+
+  UpdateTalentsSchedule:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/UpdateTalents/index.handler
+      # Same Wednesday window as the instances job, staggered by 30 minutes so
+      # the two are not hitting Blizzard at the same time.
+      Description: Rebuilds the talent trees for every spec every week, after EU maintenance.
+      Timeout: 900
+      Role: !GetAtt UpdateCharactersLambdaRole.Arn
+      Events:
+        TalentUpdateSchedule:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: 'cron(45 14 ? * WED *)'
             ScheduleExpressionTimezone: Europe/London
             RetryPolicy:
               MaximumRetryAttempts: 0

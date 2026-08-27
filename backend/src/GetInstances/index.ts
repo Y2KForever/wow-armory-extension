@@ -48,20 +48,7 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     ConsistentRead: false,
   });
 
-  const groupedRaids = new Map<string, ApiInstance[]>();
-  const expansionOrder = [
-    'Classic',
-    'Burning Crusade',
-    'Wrath of the Lich King',
-    'Cataclysm',
-    'Mists of Pandaria',
-    'Warlords of Draenor',
-    'Legion',
-    'Battle for Azeroth',
-    'Shadowlands',
-    'Dragonflight',
-    'The War Within',
-  ];
+  const groupedRaids = new Map<number, { name: string; raids: ApiInstance[] }>();
 
   try {
     const { Items } = await ddbClient.send(instanceQueryCommand);
@@ -73,21 +60,20 @@ const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
         return;
       }
 
-      const name = unmarshalled.expansion.name;
+      const { id, name } = unmarshalled.expansion;
 
-      if (!groupedRaids.has(name)) {
-        groupedRaids.set(name, []);
+      if (!groupedRaids.has(id)) {
+        groupedRaids.set(id, { name, raids: [] });
       }
-      groupedRaids.get(name)?.push(unmarshalled);
+      groupedRaids.get(id)?.raids.push(unmarshalled);
     });
 
-    const sortedGroupedRaids = expansionOrder
-      .filter((expansionName) => groupedRaids.has(expansionName))
-      .map((expansionName) => ({
-        expansion: expansionName,
-        raids: groupedRaids.get(expansionName)?.toReversed(),
-      }))
-      .toReversed();
+    const sortedGroupedRaids = [...groupedRaids.entries()]
+      .sort(([idA], [idB]) => idB - idA)
+      .map(([, { name, raids }]) => ({
+        expansion: name,
+        raids: raids.sort((a, b) => b.id - a.id),
+      }));
 
     return ApiResult(200, JSON.stringify(sortedGroupedRaids));
   } catch (err) {

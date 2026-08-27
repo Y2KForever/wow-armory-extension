@@ -4,8 +4,10 @@ import {
   ApiCharacterStatus,
   ApiCharacterSummary,
   ApiCharacterTalents,
+  ApiDungeons,
   ApiInstance,
   ApiItems,
+  ApiMythicKeystone,
   ApiRaids,
 } from '../types/Api';
 import {
@@ -17,13 +19,29 @@ import {
   JournalIndex,
   JournalInstance,
   MediaResponse,
+  MythicKeystoneDungeon,
+  MythicKeystoneProfile,
+  MythicKeystoneSeason,
   Raids,
   Slots,
   Talents,
+  TalentTree,
+  TalentTreeIndex,
+  TalentTreeNode,
+  TalentTreeTooltip,
   TokenResponse,
 } from '../types/BattleNet';
-import { checkIfImageExist, delay, downloadImage, rgbaToHex, toDashes, uploadImage } from '../utils/utils';
-import { DynamoInstance } from '../types/DynamoDb';
+import {
+  checkIfImageExist,
+  chunkArray,
+  delay,
+  downloadImage,
+  rgbaToHex,
+  toDashes,
+  toUnderscores,
+  uploadImage,
+} from '../utils/utils';
+import { DynamoInstance, Talent, Talents as DynamoTalents } from '../types/DynamoDb';
 
 class BattleNetApi {
   private static instance: BattleNetApi;
@@ -94,10 +112,11 @@ class BattleNetApi {
     });
 
     if (!response.ok) {
-      console.log(`Token: `, token);
-      console.log('resp', await response.text());
-      console.log('namespace', namespace);
-      throw new Error(`API request failed: ${response.statusText}`);
+      console.error(
+        `API request failed: ${response.status} ${response.statusText}`,
+        JSON.stringify({ url, namespace, body: await response.text() }),
+      );
+      throw new Error(`API request failed: ${response.status} ${response.statusText} for ${url}`);
     }
 
     return response;
@@ -119,10 +138,13 @@ class BattleNetApi {
       return { key: asset.key, filename };
     });
     const results = await Promise.all(uploadPromises);
-    return results.reduce((mediaMap, { key, filename }) => {
-      mediaMap[key] = filename;
-      return mediaMap;
-    }, {} as Record<string, string>);
+    return results.reduce(
+      (mediaMap, { key, filename }) => {
+        mediaMap[key] = filename;
+        return mediaMap;
+      },
+      {} as Record<string, string>,
+    );
   }
 
   private async fetchJournalMedia(
@@ -185,14 +207,18 @@ class BattleNetApi {
         const socketMediaUrl = socket.media?.key.href;
         let processedImage: string | undefined = undefined;
         if (socketMediaUrl) {
-          const socketImagesResp = await this.makeRequest(socket.media.key.href, 'GET', false, token);
-          const socketJSON = (await socketImagesResp.json()) as MediaResponse;
-          if (socketJSON.assets?.length) {
-            const socketImage = socketJSON.assets[0];
-            const ext = socketImage.value.split('.').pop()?.toLowerCase() || 'jpg';
-            const socketFilename = `${itemId}-${socket.socket_type.type}.${ext}`;
-            const socketS3Key = `sockets/${socketFilename}`;
-            processedImage = await this.processSocketMedia(socketImage.value, socketS3Key, client);
+          try {
+            const socketImagesResp = await this.makeRequest(socket.media.key.href, 'GET', false, token);
+            const socketJSON = (await socketImagesResp.json()) as MediaResponse;
+            if (socketJSON.assets?.length) {
+              const socketImage = socketJSON.assets[0];
+              const ext = socketImage.value.split('.').pop()?.toLowerCase() || 'jpg';
+              const socketFilename = `${itemId}-${socket.socket_type.type}.${ext}`;
+              const socketS3Key = `sockets/${socketFilename}`;
+              processedImage = await this.processSocketMedia(socketImage.value, socketS3Key, client);
+            }
+          } catch (err) {
+            console.error(`Failed to fetch socket media for item ${itemId}:`, err);
           }
         }
         return {
@@ -363,6 +389,178 @@ class BattleNetApi {
     }
   }
 
+  private async fetchTalentTreeIndex(region: string, baseUrl: string, token: string): Promise<TalentTreeIndex> {
+    const url = this.buildGameDataUrl(region, baseUrl, 'talent-tree/index');
+    const resp = await this.makeRequest(url, 'GET', true, token, `static-${region}`);
+    return (await resp.json()) as TalentTreeIndex;
+  }
+
+  private async fetchTalentTree(href: string, region: string, token: string): Promise<TalentTree> {
+    const resp = await this.makeRequest(href, 'GET', true, token, `static-${region}`);
+    return (await resp.json()) as TalentTree;
+  }
+
+  private async fetchSpellMedia(
+    region: string,
+    baseUrl: string,
+    spellId: number,
+    token: string,
+  ): Promise<MediaResponse | null> {
+    try {
+      const resp = await this.makeRequest(
+        `https://${region}.${baseUrl}/data/wow/media/spell/${spellId}`,
+        'GET',
+        true,
+        token,
+        `static-${region}`,
+      );
+      return (await resp.json()) as MediaResponse;
+    } catch (err) {
+      console.error(`Failed to fetch media for spell ${spellId}:`, err);
+      return null;
+    }
+  }
+
+  private async cacheTalentIcons(spellIds: number[], region: string, baseUrl: string, token: string): Promise<void> {
+    const client = BattleNetApi.getS3Client();
+    for (const batch of chunkArray([...new Set(spellIds)], 8)) {
+      await Promise.all(
+        batch.map(async (spellId) => {
+          const s3Key = `talents/${spellId}.jpg`;
+          try {
+            if (await checkIfImageExist(s3Key, client)) {
+              return;
+            }
+            const media = await this.fetchSpellMedia(region, baseUrl, spellId, token);
+            if (media?.assets?.length) {
+              await this.processMediaAssets(media.assets, () => s3Key, client);
+            }
+          } catch (err) {
+            console.error(`Failed to cache icon for spell ${spellId}:`, err);
+          }
+        }),
+      );
+    }
+  }
+
+  private mapTalentTooltip(tooltip: TalentTreeTooltip | undefined) {
+    if (!tooltip?.spell_tooltip) {
+      return null;
+    }
+    return {
+      spell_tooltip: {
+        ...tooltip.spell_tooltip,
+        talent: tooltip.talent,
+      },
+    };
+  }
+
+  private mapTalentNode(node: TalentTreeNode): Talent | null {
+    let isChoice = false;
+
+    const ranks = (node.ranks ?? [])
+      .map((rank) => {
+        const choices = rank.choice_of_tooltips ?? rank.tooltip?.choice_of_tooltips;
+
+        if (choices?.length) {
+          const mappedChoices = choices
+            .map((choice) => this.mapTalentTooltip(choice))
+            .filter((choice) => choice !== null);
+
+          if (mappedChoices.length === 0) {
+            return null;
+          }
+
+          isChoice = true;
+
+          return {
+            rank: rank.rank,
+            tooltip: {
+              ...mappedChoices[0],
+              choice_of_tooltips: mappedChoices,
+            },
+          };
+        }
+
+        const tooltip = this.mapTalentTooltip(rank.tooltip);
+        return tooltip ? { rank: rank.rank, tooltip } : null;
+      })
+      .filter((rank) => rank !== null);
+
+    if (ranks.length === 0) {
+      return null;
+    }
+
+    const nodeType = node.node_type?.type?.toUpperCase();
+    const type = isChoice ? 'CHOICE' : nodeType === 'PASSIVE' ? 'PASSIVE' : 'ACTIVE';
+
+    return {
+      id: node.id,
+      row: node.display_row ?? 0,
+      col: node.display_col ?? 0,
+      locked_by: node.locked_by ?? [],
+      unlocks: node.unlocks ?? [],
+      type,
+      ranks,
+    };
+  }
+
+  public async fetchTalents(region: string, baseUrl: string, token: string): Promise<DynamoTalents[]> {
+    const index = await this.fetchTalentTreeIndex(region, baseUrl, token);
+    const specs: DynamoTalents[] = [];
+
+    for (const specTree of index.spec_talent_trees ?? []) {
+      try {
+        const tree = await this.fetchTalentTree(specTree.key.href, region, token);
+
+        const className = tree.playable_class?.name;
+        const specName = tree.playable_specialization?.name ?? specTree.name;
+
+        if (!className || !specName) {
+          console.error(`Skipping talent tree ${specTree.id}: missing class or spec name.`);
+          continue;
+        }
+
+        const mapNodes = (nodes: TalentTreeNode[] | undefined): Talent[] =>
+          (nodes ?? []).map((node) => this.mapTalentNode(node)).filter((talent): talent is Talent => talent !== null);
+
+        const classTalents = mapNodes(tree.class_talent_nodes);
+        const specTalents = mapNodes(tree.spec_talent_nodes);
+        const heroTalents = (tree.hero_talent_trees ?? []).map((heroTree) => ({
+          id: heroTree.id,
+          name: heroTree.name,
+          talents: mapNodes(heroTree.hero_talent_nodes),
+        }));
+
+        const spellIds = [...classTalents, ...specTalents, ...heroTalents.flatMap((hero) => hero.talents)].flatMap(
+          (talent) =>
+            talent.ranks.flatMap((rank) => {
+              const tooltips = rank.tooltip?.choice_of_tooltips ?? (rank.tooltip ? [rank.tooltip] : []);
+              return tooltips
+                .map((tooltip) => tooltip.spell_tooltip?.spell?.id)
+                .filter((id): id is number => typeof id === 'number');
+            }),
+        );
+
+        await this.cacheTalentIcons(spellIds, region, baseUrl, token);
+
+        specs.push({
+          spec: `${specName.toLowerCase()}-${toUnderscores(className.toLowerCase())}`,
+          class: toUnderscores(className.toLowerCase()),
+          class_talents: classTalents,
+          spec_talents: specTalents,
+          hero_talents: heroTalents,
+        });
+
+        await delay(200);
+      } catch (err) {
+        console.error(`Failed to build talents for tree ${specTree.id} (${specTree.name}):`, err);
+      }
+    }
+
+    return specs;
+  }
+
   private async fetchJournalInstancesIndex(region: string, baseUrl: string, token: string): Promise<JournalIndex> {
     const url = this.buildGameDataUrl(region, baseUrl, 'journal-instance/index');
     try {
@@ -438,32 +636,142 @@ class BattleNetApi {
     baseUrl: string,
     token: string,
   ): Promise<ApiRaids> {
-    const url = this.buildCharacterUrl(character, region, baseUrl, 'encounters/raids');
-    const resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
-    const data = (await resp.json()) as Raids;
+    return { raids: await this.fetchEncounters(character, region, baseUrl, token, 'raids') };
+  }
 
-    return {
-      raids:
+  public async fetchCharacterDungeons(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+  ): Promise<ApiDungeons> {
+    return { dungeons: await this.fetchEncounters(character, region, baseUrl, token, 'dungeons') };
+  }
+
+  private async fetchEncounters(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+    kind: 'raids' | 'dungeons',
+  ): Promise<ApiRaids['raids']> {
+    try {
+      const url = this.buildCharacterUrl(character, region, baseUrl, `encounters/${kind}`);
+      const resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
+      const data = (await resp.json()) as Raids;
+
+      return (
         data.expansions?.map((expansion) => ({
           name: expansion.expansion.name,
           id: expansion.expansion.id,
-          instances: expansion.instances?.map((instance) => ({
+          instances: (expansion.instances ?? []).map((instance) => ({
             name: instance.instance.name,
             id: instance.instance.id,
-            modes: instance.modes?.map((mode) => ({
-              [mode.difficulty.type]: {
-                status: mode.status.type,
-                progress: {
-                  completed: mode.progress.completed_count,
+            modes: (instance.modes ?? [])
+              .filter((mode) => typeof mode.difficulty?.type === 'string' && mode.difficulty.type.length > 0)
+              .map((mode) => ({
+                [mode.difficulty.type]: {
+                  encounters: Object.fromEntries(
+                    (mode.progress.encounters ?? []).map((encounter) => [
+                      encounter.encounter.id,
+                      encounter.completed_count,
+                    ]),
+                  ),
                 },
-                encounters: Object.fromEntries(
-                  mode.progress.encounters?.map((encounter) => [encounter.encounter.id, encounter.completed_count]),
-                ),
-              },
-            })),
+              })),
           })),
-        })) || null,
-    };
+        })) ?? []
+      );
+    } catch (err) {
+      console.error(`Failed to fetch ${kind} encounters for ${character.name}:`, err);
+      return [];
+    }
+  }
+
+  private keystoneTimers = new Map<number, number[]>();
+
+  private async fetchKeystoneUpgrades(region: string, baseUrl: string, dungeonId: number, token: string) {
+    const cached = this.keystoneTimers.get(dungeonId);
+    if (cached) return cached;
+
+    try {
+      const resp = await this.makeRequest(
+        `https://${region}.${baseUrl}/data/wow/mythic-keystone/dungeon/${dungeonId}`,
+        'GET',
+        true,
+        token,
+        `dynamic-${region}`,
+      );
+      const data = (await resp.json()) as MythicKeystoneDungeon;
+      const timers = (data.keystone_upgrades ?? [])
+        .sort((a, b) => b.upgrade_level - a.upgrade_level)
+        .map((upgrade) => upgrade.qualifying_duration);
+      this.keystoneTimers.set(dungeonId, timers);
+      return timers;
+    } catch (err) {
+      console.error(`Failed to fetch keystone upgrades for dungeon ${dungeonId}:`, err);
+      this.keystoneTimers.set(dungeonId, []);
+      return [];
+    }
+  }
+
+  public async fetchCharacterMythicKeystone(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+  ): Promise<ApiMythicKeystone> {
+    try {
+      const profileUrl = this.buildCharacterUrl(character, region, baseUrl, 'mythic-keystone-profile');
+      const namespace = this.getNamespace(character, region);
+      const profileResp = await this.makeRequest(profileUrl, 'GET', true, token, namespace);
+      const profile = (await profileResp.json()) as MythicKeystoneProfile;
+
+      const latest = (profile.seasons ?? []).reduce<number | null>(
+        (best, season) => (best === null || season.id > best ? season.id : best),
+        null,
+      );
+
+      if (latest === null) {
+        return { mythic_keystone: null };
+      }
+
+      const seasonResp = await this.makeRequest(`${profileUrl}/season/${latest}`, 'GET', true, token, namespace);
+      const season = (await seasonResp.json()) as MythicKeystoneSeason;
+
+      const runs = await Promise.all(
+        (season.best_runs ?? []).map(async (run) => {
+          const timers = await this.fetchKeystoneUpgrades(region, baseUrl, run.dungeon.id, token);
+          const beaten = timers.filter((timer) => run.duration <= timer).length;
+
+          const affixes = (run.keystone_affixes ?? []).map((affix) => affix.name.toLowerCase());
+          const affix = affixes.find((name) => name === 'fortified' || name === 'tyrannical') ?? '';
+
+          return {
+            dungeon_id: run.dungeon.id,
+            dungeon: run.dungeon.name,
+            affix,
+            level: run.keystone_level,
+            duration: run.duration,
+            timed: run.is_completed_within_time,
+            upgrades: timers.length ? beaten : run.is_completed_within_time ? 1 : 0,
+            rating: Math.round(run.mythic_rating?.rating ?? 0),
+            completed_at: run.completed_timestamp,
+          };
+        }),
+      );
+
+      return {
+        mythic_keystone: {
+          season_id: latest,
+          rating: Math.round(profile.current_mythic_rating?.rating ?? 0),
+          runs,
+        },
+      };
+    } catch (err) {
+      console.error(`Failed to fetch mythic keystone profile for ${character.name}:`, err);
+      return { mythic_keystone: null };
+    }
   }
 
   public async fetchCharacterItems(
@@ -535,8 +843,8 @@ class BattleNetApi {
             requirement: item.requirements?.level?.display_string
               ? item.requirements.level.display_string
               : item.requirements?.display_string
-              ? item.requirements.display_string
-              : null,
+                ? item.requirements.display_string
+                : null,
             level: item.level?.value || null,
             transmog: item.transmog?.item.name || null,
           },
@@ -545,10 +853,13 @@ class BattleNetApi {
 
       const itemsArray = await Promise.all(itemPromises);
       const equippedItems = Object.assign({}, ...itemsArray);
-      const defaultSlots = Object.values(Slots).reduce((acc, slot) => {
-        acc[slot] = null;
-        return acc;
-      }, {} as Record<string, null>);
+      const defaultSlots = Object.values(Slots).reduce(
+        (acc, slot) => {
+          acc[slot] = null;
+          return acc;
+        },
+        {} as Record<string, null>,
+      );
       const items: ApiItems = { ...defaultSlots, ...equippedItems };
       return items;
     } catch (err) {
