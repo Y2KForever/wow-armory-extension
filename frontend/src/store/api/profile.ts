@@ -53,9 +53,10 @@ export const profileApi = createApi({
       }),
     }),
     getForceUpdate: builder.mutation({
-      query: () => ({
+      query: (characterId: number) => ({
         url: 'force-update',
         method: 'GET',
+        params: { characterId },
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;

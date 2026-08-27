@@ -16,5 +16,6 @@ export enum Views {
   TALENTS = 'talents',
   RAIDS = 'raids',
   DUNGEON = 'dungeon',
+  MPLUS = 'mplus',
   PVP = 'pvp',
 }

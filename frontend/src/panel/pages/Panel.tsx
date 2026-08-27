@@ -1,16 +1,18 @@
 import { TwitchAuthContext } from '../App';
-import { useContext, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { useGetProfileQuery } from '@/store/api/profile';
 import { Spinner } from '@/assets/icons/Spinner';
-import { ApiCharacter } from '@/types/Characters';
+import { ApiCharacter, InstanceType } from '@/types/Characters';
 import SimpleBar from 'simplebar-react';
 import 'simplebar-react/dist/simplebar.min.css';
 import { Views } from '@/types/User';
 import { MenuHeader } from '../components/Menu';
-import { CharactersView } from './Characters';
+import { Frame } from '../components/Frame';
+import { CharactersView, RosterHeader } from './Characters';
 import { CharacterView } from './Character';
 import { TalentView } from './Talents';
 import { InstanceView } from './Instances';
+import { MythicKeystoneView } from './MythicKeystone';
 
 export const Panel = () => {
   const twitchAuth = useContext(TwitchAuthContext);
@@ -23,7 +25,12 @@ export const Panel = () => {
     skip: isAuthLoading,
   });
   const [view, setView] = useState<Views>(Views.LIST);
-  const [selectedCharacter, setSelectedCharacter] = useState<ApiCharacter | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const selectedCharacter = useMemo(
+    () => data?.characters?.find((character) => character.character_id === selectedId) ?? null,
+    [data, selectedId],
+  );
+  const setSelectedCharacter = (character: ApiCharacter | null) => setSelectedId(character?.character_id ?? null);
   if (isProfileLoading) {
     return (
       <div className="flex flex-1 justify-center">
@@ -49,10 +56,17 @@ export const Panel = () => {
   }
 
   return (
-    <div className="flex w-full flex-col">
-      {view !== Views.LIST && <MenuHeader selectedCharacter={selectedCharacter} setView={setView} view={view} />}
+    <Frame
+      header={
+        view === Views.LIST ? (
+          <RosterHeader characters={data?.characters ?? []} />
+        ) : (
+          <MenuHeader selectedCharacter={selectedCharacter} setView={setView} view={view} />
+        )
+      }
+    >
       {view === Views.LIST && (
-        <SimpleBar style={{ width: '100%', maxHeight: 500 }}>
+        <SimpleBar className="flex-1 min-h-0" style={{ width: '100%' }}>
           {data?.characters ? (
             <CharactersView setCharacter={setSelectedCharacter} characters={data.characters} setView={setView} />
           ) : (
@@ -64,7 +78,10 @@ export const Panel = () => {
       )}
       {view === Views.CHARACTER && selectedCharacter && <CharacterView character={selectedCharacter} />}
       {view === Views.TALENTS && selectedCharacter && <TalentView character={selectedCharacter} />}
-      {view === Views.RAIDS && selectedCharacter && <InstanceView character={selectedCharacter} />}
-    </div>
+      {view === Views.RAIDS && selectedCharacter && (
+        <InstanceView character={selectedCharacter} type={InstanceType.RAID} />
+      )}
+      {view === Views.MPLUS && selectedCharacter && <MythicKeystoneView character={selectedCharacter} />}
+    </Frame>
   );
 };

@@ -343,3 +343,106 @@ export type JournalInstance = {
     type: string;
   };
 };
+
+export type TalentTreeIndex = {
+  spec_talent_trees: {
+    key: {
+      href: string;
+    };
+    name: string;
+    id: number;
+  }[];
+};
+
+export type TalentTreeTooltip = {
+  talent?: {
+    name: string;
+    key: {
+      href: string;
+    };
+    id: number;
+  };
+  spell_tooltip?: {
+    spell: {
+      name: string;
+      id: number;
+      key: {
+        href: string;
+      };
+    };
+    description: string;
+    cast_time?: string;
+    cooldown?: string;
+    range?: string;
+    power_cost?: string;
+  };
+};
+
+export type TalentTreeNode = {
+  id: number;
+  node_type?: {
+    id: number;
+    type: string;
+  };
+  display_row?: number;
+  display_col?: number;
+  locked_by?: number[];
+  unlocks?: number[];
+  ranks?: {
+    rank: number;
+    tooltip?: TalentTreeTooltip & { choice_of_tooltips?: TalentTreeTooltip[] };
+    choice_of_tooltips?: TalentTreeTooltip[];
+  }[];
+};
+
+export type TalentTree = {
+  id: number;
+  playable_class?: {
+    name: string;
+    id: number;
+  };
+  playable_specialization?: {
+    name: string;
+    id: number;
+  };
+  class_talent_nodes?: TalentTreeNode[];
+  spec_talent_nodes?: TalentTreeNode[];
+  hero_talent_trees?: {
+    id: number;
+    name: string;
+    hero_talent_nodes?: TalentTreeNode[];
+  }[];
+};
+
+export type MythicKeystoneProfile = {
+  current_mythic_rating?: {
+    color?: { r: number; g: number; b: number; a: number };
+    rating: number;
+  };
+  seasons?: {
+    id: number;
+    key: { href: string };
+  }[];
+};
+
+export type MythicKeystoneSeason = {
+  season: { id: number };
+  best_runs?: {
+    completed_timestamp: number;
+    duration: number;
+    keystone_level: number;
+    keystone_affixes?: { name: string; id: number }[];
+    dungeon: { id: number; name: string };
+    is_completed_within_time: boolean;
+    mythic_rating?: { rating: number };
+  }[];
+};
+
+export type MythicKeystoneDungeon = {
+  id: number;
+  name: string;
+  keystone_upgrades?: {
+    upgrade_level: number;
+    qualifying_duration: number;
+  }[];
+};
