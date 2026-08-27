@@ -84,7 +84,7 @@ body {
 @layer base {
   @font-face {
     font-family: 'FrizQuadrata';
-    src: url('assets/fonts/friz-quadrata.ttf') format('ttf'), url('/assets/fonts/friz-quadrata.ttf') format('ttf');
+    src: url('assets/fonts/friz-quadrata.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
   }

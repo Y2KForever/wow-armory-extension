@@ -46,9 +46,6 @@ const lambdaHandler = async (): Promise<void> => {
 
   const now = new Date().toISOString();
 
-  // Written one spec at a time rather than as a transaction: each row is
-  // independent, and a spec that lands is worth keeping even if a later one
-  // fails or the lambda runs out of time.
   let written = 0;
 
   for (const spec of specs) {

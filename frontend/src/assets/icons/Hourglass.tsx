@@ -1,0 +1,20 @@
+import { HTMLProps } from 'react';
+export const Hourglass = (props: HTMLProps<HTMLElement>) => {
+  return (
+    <svg
+      style={props.style}
+      className={props.className}
+      width="24"
+      height="24"
+      viewBox="0 0 640 640"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path opacity=".4" fill="currentColor" d="M241.9 208L398 208L319.9 286.1L241.8 208z" />
+      <path
+        fill="currentColor"
+        d="M128 576L512 576L512 528L480 528L480 446.1L473 439.1L354 320.1L473 201.1L480 194.1L480 112.2L512 112.2L512 64.2L128 64.2L128 112.2L160 112.2L160 194.1L167 201.1L286 320.1L167 439.1L160 446.1L160 528L128 528L128 576zM208 528L208 465.9L320 353.9L432 465.9L432 528L208 528zM241.9 208L398 208L319.9 286.1L241.8 208zM208 160L208 112L432 112L432 160L208 160z"
+      />
+    </svg>
+  );
+};

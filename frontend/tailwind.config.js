@@ -25,7 +25,9 @@ export default {
       },
       fontFamily: {
         sans: ['Poppins', 'sans-serif', ...fontFamily.sans],
-        friz: ['Friz Quadrata', 'sans-serif'],
+        // Must match the @font-face family in src/index.css exactly ('FrizQuadrata',
+        // no space) or font-friz silently falls back to sans-serif.
+        friz: ['FrizQuadrata', 'serif'],
         semplicita: ['semplicita pro', ...fontFamily.sans],
       },
       borderRadius: {
@@ -57,6 +59,22 @@ export default {
           transmog: '#ff80ff',
           unselectedGray: '#808080',
           green: '#00ff00',
+          bezel: '#6b5420',
+          'gold-dim': '#8a6d14',
+          'gold-mid': '#c9a53c',
+          'gold-mute': '#7b6a45',
+          ground: '#08090c',
+          'ground-hi': '#171a22',
+          plate: '#2a2210',
+          'plate-dark': '#141108',
+          slot: '#4a3f22',
+        },
+        difficulty: {
+          lfr: '#2f8f3f',
+          normal: '#0081ff',
+          heroic: '#c600ff',
+          mythic: '#ff8000',
+          none: '#22242b',
         },
         rarity: {
           poor: '#9d9d9d',
