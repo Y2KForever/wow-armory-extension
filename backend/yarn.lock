@@ -450,10 +450,12 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.28.2.tgz#b21affb804cc167c133d95f45b3a1dc1323b9a87"
   integrity sha512-5ebpxr3nWMzrL/rnUI755Jkuee0bHL/Gq0WTF9lvcpv73wAp5eu8MfBUgWK9bhWvZjj7yX8etf/8tI8Ney695g==
 
-"@middy/core@^6.x.x":
-  version "6.1.6"
-  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.1.6.tgz#c7773881cbd1869dc50d7a0bce3718e37a5573a7"
-  integrity sha512-YT7J0+9zgGIhKnC6lA5z1iE+EDHpmMda7H7gD59cu4inxRC2RTk+ensGFaJxXXMlAM08vGJn6Q5gH8KnV6YWoQ==
+"@middy/core@^7.x.x":
+  version "7.8.0"
+  resolved "https://registry.yarnpkg.com/@middy/core/-/core-7.8.0.tgz#e2771b935bb17d818a35d8f13103e86f8516474a"
+  integrity sha512-RKRv+T4WoBzretyiaIL4Act1RJOLwcYLXYagRv7vKC0NJmbz1rr6+ZLOXgrQAjtVgUOInaJd7cT9g7iuwiKwPA==
+  dependencies:
+    "@middy/util" "7.8.0"
 
 "@middy/error-logger@^6.x.x":
   version "6.1.6"
@@ -471,6 +473,11 @@
   version "6.4.5"
   resolved "https://registry.yarnpkg.com/@middy/util/-/util-6.4.5.tgz#624f6b5c3be2800a572c7524cd2bd8ccc5535da5"
   integrity sha512-170ml5Q8QIHjric+ynwmDoa1sbcaMkUJumpUNxubqzStN7rEebVHnzXLQBwvSAhp7Fhcja7q2JLo0yjHpyPO4Q==
+
+"@middy/util@7.8.0":
+  version "7.8.0"
+  resolved "https://registry.yarnpkg.com/@middy/util/-/util-7.8.0.tgz#f188ed5acd376306ecdcb30f0d8e9ec4f972996b"
+  integrity sha512-LObrvOI9m8Y11XzqhS0iFB+AZHis8GsQ6+12LOkOrFajAaRi/r18RErvDa0TSKMDBHEy1kdgDD6fP3V0QErecA==
 
 "@smithy/core@^3.31.1", "@smithy/core@^3.33.2", "@smithy/core@^3.33.3":
   version "3.33.3"

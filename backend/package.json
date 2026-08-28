@@ -25,7 +25,7 @@
     "@aws-sdk/client-s3": "^3.1111.0",
     "@aws-sdk/client-secrets-manager": "^3.1116.0",
     "@aws-sdk/util-dynamodb": "^3.767.0",
-    "@middy/core": "^6.x.x",
+    "@middy/core": "^7.x.x",
     "@middy/error-logger": "^6.x.x",
     "@middy/http-error-handler": "^6",
     "jsonwebtoken": "^9.0.2"
