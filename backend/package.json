@@ -22,7 +22,7 @@
     "@aws-lambda-powertools/logger": "^2.34.0",
     "@aws-lambda-powertools/tracer": "^2.16.0",
     "@aws-sdk/client-dynamodb": "^3.1116.0",
-    "@aws-sdk/client-s3": "^3.1111.0",
+    "@aws-sdk/client-s3": "^3.1117.0",
     "@aws-sdk/client-secrets-manager": "^3.1116.0",
     "@aws-sdk/util-dynamodb": "^3.767.0",
     "@middy/core": "^6.x.x",
