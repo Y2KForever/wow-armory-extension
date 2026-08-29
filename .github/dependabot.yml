@@ -9,7 +9,18 @@ updates:
     directory: "/backend"
     schedule:
       interval: "daily"
+    ignore:
+      # Majors are breaking by definition and need a migration, not a merge.
+      # tailwindcss 3 -> 4 is the example: it moved the PostCSS plugin to a
+      # separate package and broke the build the moment node_modules was
+      # rebuilt. Bump majors deliberately, by hand.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
