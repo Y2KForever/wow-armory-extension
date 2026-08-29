@@ -2,10 +2,17 @@
 # yarn lockfile v1
 
 
-"@aws-lambda-powertools/commons@2.34.0", "@aws-lambda-powertools/commons@^2.16.0":
+"@aws-lambda-powertools/commons@2.34.0":
   version "2.34.0"
   resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/commons/-/commons-2.34.0.tgz#066fb212355d7f00e481e4ed63e54067bdb83841"
   integrity sha512-ga89L3UznCwkApsrVAYGywifAh9PpccXZAVE053B6IdKvZrwjv+L+ja1WyzU9sy9UR3wPEdh0LFiUCRZRhTfvQ==
+  dependencies:
+    "@aws/lambda-invoke-store" "0.3.0"
+
+"@aws-lambda-powertools/commons@2.35.0":
+  version "2.35.0"
+  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/commons/-/commons-2.35.0.tgz#e47659c5888ed409696000aafe4c7f5366ac58b5"
+  integrity sha512-DPD5fnl7V1xSPJuKGQ8KETp+nPmcIw8mYWEdNfnuTr/zNDyTkiX2l3QNUPlrtpOPtJ7r+UGSbXCgKPPlXN27Bw==
   dependencies:
     "@aws/lambda-invoke-store" "0.3.0"
 
@@ -17,13 +24,14 @@
     "@aws-lambda-powertools/commons" "2.34.0"
     "@aws/lambda-invoke-store" "0.3.0"
 
-"@aws-lambda-powertools/tracer@^2.16.0":
-  version "2.16.0"
-  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/tracer/-/tracer-2.16.0.tgz#1e152c727e322595aba24e41874ed14067ffa7ba"
-  integrity sha512-6TMj5a1Mc14f2GgXZnObo9WlrfQtXuJDxDu1rsR44iJdHdrAs8PoGM0ZHvR5RJgcitBNu4IRdD4X/5z0OHu1Kw==
+"@aws-lambda-powertools/tracer@^2.35.0":
+  version "2.35.0"
+  resolved "https://registry.yarnpkg.com/@aws-lambda-powertools/tracer/-/tracer-2.35.0.tgz#b00732ef2f69266b467998a4334ab5757a35d3b0"
+  integrity sha512-oYsWgjR7hB9C7YQVa3AGCpnC/R1cBGLkz1AEYPPzb+pvRaXtaPhE4clg/YIid9m90NXEHHJdHebp1Egfd4z1vQ==
   dependencies:
-    "@aws-lambda-powertools/commons" "^2.16.0"
-    aws-xray-sdk-core "^3.10.3"
+    "@aws-lambda-powertools/commons" "2.35.0"
+    "@aws/lambda-invoke-store" "0.3.0"
+    aws-xray-sdk-core "^3.12.0"
 
 "@aws-sdk/checksums@^3.1000.28":
   version "3.1000.28"
@@ -626,10 +634,10 @@ aws-sdk@^2.814.0:
     uuid "8.0.0"
     xml2js "0.6.2"
 
-aws-xray-sdk-core@^3.10.3:
-  version "3.10.3"
-  resolved "https://registry.yarnpkg.com/aws-xray-sdk-core/-/aws-xray-sdk-core-3.10.3.tgz#14af55243dbfdffdbbb2cca65302dd16a45a276a"
-  integrity sha512-bltsLAr4juMJJ2tT5/L/CtwUGIvHihtPe6SO/z3jjOD73PHhOYxcuwCMFFyTbTy5S4WThJO32oZk7r+pg3ZoCQ==
+aws-xray-sdk-core@^3.12.0:
+  version "3.12.0"
+  resolved "https://registry.yarnpkg.com/aws-xray-sdk-core/-/aws-xray-sdk-core-3.12.0.tgz#7337f287f022212467271c690e6eafe1648e928e"
+  integrity sha512-lwalRdxXRy+Sn49/vN7W507qqmBRk5Fy2o0a9U6XTjL9IV+oR5PUiiptoBrOcaYCiVuGld8OEbNqhm6wvV3m6A==
   dependencies:
     "@aws-sdk/types" "^3.4.1"
     "@smithy/service-error-classification" "^2.0.4"
