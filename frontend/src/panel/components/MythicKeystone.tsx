@@ -17,11 +17,9 @@ interface IMythicKeystoneProps {
   character: ApiCharacter;
 }
 
-const AffixCell = ({ run }: { run: AffixRun | null }) => (
-  <div className="flex items-center flex-1 gap-[5px] min-w-0">
-    <span className={`flex-none w-[23px] text-[12px] font-bold ${keyLevelClass(run)}`}>
-      {run ? `+${run.level}` : '—'}
-    </span>
+const BestRun = ({ run, runCount }: { run: AffixRun | null; runCount: number }) => (
+  <div className="flex items-center gap-[6px] min-w-0">
+    <span className={`flex-none text-[12px] font-bold ${keyLevelClass(run)}`}>{run ? `+${run.level}` : '—'}</span>
     <span className={`flex-none text-[10px] font-mono ${timeClass(run)}`}>{run ? run.time : 'no run'}</span>
     <div className="flex gap-[2px]">
       {run &&
@@ -33,6 +31,7 @@ const AffixCell = ({ run }: { run: AffixRun | null }) => (
           />
         ))}
     </div>
+    {runCount > 1 && <span className="flex-none ml-auto text-[9px] text-[#6f6141]">{runCount} runs</span>}
   </div>
 );
 
@@ -111,7 +110,7 @@ export const MythicKeystone = ({ character }: IMythicKeystoneProps) => {
           SEASON BEST RUNS
         </span>
         <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg,rgba(138,109,20,.5),transparent)' }} />
-        <span className="text-[9px] font-medium text-[#6f6141] whitespace-nowrap">fortified / tyrannical</span>
+        <span className="text-[9px] font-medium text-[#6f6141] whitespace-nowrap">best run per dungeon</span>
       </div>
 
       <SimpleBar className="flex-1 min-h-0" style={{ width: '100%' }}>
@@ -128,11 +127,7 @@ export const MythicKeystone = ({ character }: IMythicKeystoneProps) => {
                   {row.total}
                 </span>
               </div>
-              <div className="flex items-center gap-[8px]">
-                <AffixCell run={row.fortified} />
-                <div className="flex-none w-px h-[11px] bg-[rgba(138,109,20,.35)]" />
-                <AffixCell run={row.tyrannical} />
-              </div>
+              <BestRun run={row.best} runCount={row.runCount} />
             </div>
           ))}
         </div>

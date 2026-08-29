@@ -13,8 +13,8 @@ export interface AffixRun {
 export interface DungeonRow {
   dungeonId: number;
   name: string;
-  fortified: AffixRun | null;
-  tyrannical: AffixRun | null;
+  best: AffixRun | null;
+  runCount: number;
   total: number;
   dates: string;
 }
@@ -56,34 +56,29 @@ const toAffixRun = (run: KeystoneRun): AffixRun => ({
 export const summariseKeystone = (keystone: ApiCharacter['mythic_keystone']): KeystoneSummary | null => {
   if (!keystone || !keystone.runs?.length) return null;
 
-  const byDungeon = new Map<number, DungeonRow>();
-
+  const byDungeon = new Map<number, KeystoneRun[]>();
   for (const run of keystone.runs) {
-    let row = byDungeon.get(run.dungeon_id);
-    if (!row) {
-      row = { dungeonId: run.dungeon_id, name: run.dungeon, fortified: null, tyrannical: null, total: 0, dates: '' };
-      byDungeon.set(run.dungeon_id, row);
-    }
-
-    const affix = run.affix === 'tyrannical' ? 'tyrannical' : 'fortified';
-    const existing = row[affix];
-    if (!existing || run.rating > existing.rating) {
-      row[affix] = toAffixRun(run);
+    const runs = byDungeon.get(run.dungeon_id);
+    if (runs) {
+      runs.push(run);
+    } else {
+      byDungeon.set(run.dungeon_id, [run]);
     }
   }
 
-  const rows = [...byDungeon.values()].map((row) => {
-    const runs = keystone.runs.filter((run) => run.dungeon_id === row.dungeonId);
-    const latest = Math.max(...runs.map((run) => run.completed_at));
+  const rows: DungeonRow[] = [...byDungeon.entries()].map(([dungeonId, runs]) => {
+    const best = runs.reduce((top, run) => (run.rating > top.rating ? run : top));
     return {
-      ...row,
-      total: Math.round((row.fortified?.rating ?? 0) + (row.tyrannical?.rating ?? 0)),
+      dungeonId,
+      name: best.dungeon,
+      best: toAffixRun(best),
+      runCount: runs.length,
+      total: Math.round(best.rating),
       dates: runs
         .slice()
         .sort((a, b) => b.completed_at - a.completed_at)
-        .map((run) => `${run.affix === 'tyrannical' ? 'Tyrannical' : 'Fortified'} ${formatDate(run.completed_at)}`)
+        .map((run) => `+${run.level} ${formatDate(run.completed_at)}`)
         .join(' · '),
-      latest,
     };
   });
 
