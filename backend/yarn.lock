@@ -449,9 +449,9 @@
   integrity sha512-5ebpxr3nWMzrL/rnUI755Jkuee0bHL/Gq0WTF9lvcpv73wAp5eu8MfBUgWK9bhWvZjj7yX8etf/8tI8Ney695g==
 
 "@middy/core@^6.x.x":
-  version "6.1.6"
-  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.1.6.tgz#c7773881cbd1869dc50d7a0bce3718e37a5573a7"
-  integrity sha512-YT7J0+9zgGIhKnC6lA5z1iE+EDHpmMda7H7gD59cu4inxRC2RTk+ensGFaJxXXMlAM08vGJn6Q5gH8KnV6YWoQ==
+  version "6.4.5"
+  resolved "https://registry.yarnpkg.com/@middy/core/-/core-6.4.5.tgz#e3d266cfdf49a6e03fc8e9db43a972d0188dac0b"
+  integrity sha512-qRGCslDHjMr08fywcfVbWR9qpx16vGD481i9GpX3r5efi8Arjp/44JTjfeJkJJxvIb/8/+E9MLvU86+3oe1oJQ==
 
 "@middy/error-logger@^6.x.x":
   version "6.1.6"
