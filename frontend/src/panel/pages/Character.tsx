@@ -10,6 +10,4 @@ const CharacterViewComponent = ({ character }: ICharacterViewProps) => {
   return <Character character={character} />;
 };
 
-export const CharacterView = React.memo(CharacterViewComponent, (prevProps, nextProps) => {
-  return prevProps.character.character_id === nextProps.character.character_id;
-});
+export const CharacterView = React.memo(CharacterViewComponent);
