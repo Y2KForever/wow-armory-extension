@@ -17,11 +17,15 @@ interface IMythicKeystoneProps {
   character: ApiCharacter;
 }
 
-const BestRun = ({ run, runCount }: { run: AffixRun | null; runCount: number }) => (
-  <div className="flex items-center gap-[6px] min-w-0">
-    <span className={`flex-none text-[12px] font-bold ${keyLevelClass(run)}`}>{run ? `+${run.level}` : '—'}</span>
-    <span className={`flex-none text-[10px] font-mono ${timeClass(run)}`}>{run ? run.time : 'no run'}</span>
-    <div className="flex gap-[2px]">
+const BestRun = ({ run }: { run: AffixRun | null }) => (
+  <div className="flex items-center gap-[8px] min-w-0">
+    <span className={`flex-none w-[26px] text-[12.5px] font-bold leading-none ${keyLevelClass(run)}`}>
+      {run ? `+${run.level}` : '—'}
+    </span>
+    <span className={`flex-none text-[10px] font-mono leading-none ${timeClass(run)}`}>
+      {run ? run.time : 'no run'}
+    </span>
+    <div className="flex items-center gap-[2px]">
       {run &&
         [0, 1, 2].map((slot) => (
           <div
@@ -31,7 +35,9 @@ const BestRun = ({ run, runCount }: { run: AffixRun | null; runCount: number }) 
           />
         ))}
     </div>
-    {runCount > 1 && <span className="flex-none ml-auto text-[9px] text-[#6f6141]">{runCount} runs</span>}
+    <span className="flex-none ml-auto text-[8.5px] font-medium tracking-[.06em] text-[#6f6141] whitespace-nowrap">
+      {run ? run.date : 'no run'}
+    </span>
   </div>
 );
 
@@ -97,7 +103,7 @@ export const MythicKeystone = ({ character }: IMythicKeystoneProps) => {
             >
               {stat.value}
             </span>
-            <span className="text-[8.5px] font-medium tracking-[.18em] text-blizzard-gold-mute">{stat.label}</span>
+            <span className="text-[7.5px] font-medium tracking-[.18em] text-blizzard-gold-mute">{stat.label}</span>
           </div>
         ))}
       </div>
@@ -106,28 +112,30 @@ export const MythicKeystone = ({ character }: IMythicKeystoneProps) => {
         className="flex items-center flex-none gap-[7px] h-[19px] px-[11px]"
         style={{ background: 'linear-gradient(90deg,rgba(138,109,20,.22),rgba(0,0,0,0) 72%)' }}
       >
-        <span className="text-[9.5px] font-semibold tracking-[.16em] text-blizzard-gold-mid whitespace-nowrap">
+        <span className="text-[8.5px] font-semibold tracking-[.16em] text-blizzard-gold-mid whitespace-nowrap">
           SEASON BEST RUNS
         </span>
         <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg,rgba(138,109,20,.5),transparent)' }} />
-        <span className="text-[9px] font-medium text-[#6f6141] whitespace-nowrap">best run per dungeon</span>
+        <span className="text-[8px] font-medium text-[#6f6141] whitespace-nowrap">best per dungeon</span>
       </div>
 
       <SimpleBar className="flex-1 min-h-0" style={{ width: '100%' }}>
-        <div className="flex flex-col" onMouseLeave={() => setHovered(null)}>
+        <div className="flex flex-col min-h-full" onMouseLeave={() => setHovered(null)}>
           {summary.rows.map((row) => (
             <div
               key={row.dungeonId}
               onMouseEnter={() => setHovered(row.dungeonId)}
-              className="flex flex-col justify-center flex-none gap-[3px] h-[40px] px-[11px] border-b border-[rgba(138,109,20,.14)] hover:cursor-pointer hover:bg-[rgba(221,172,0,.14)]"
+              className="flex flex-col justify-center flex-1 min-h-0 gap-[5px] py-[7px] px-[11px] border-b border-[rgba(138,109,20,.14)] hover:cursor-pointer hover:bg-[rgba(221,172,0,.14)]"
             >
               <div className="flex items-baseline gap-[7px]">
-                <span className="min-w-0 text-[11px] truncate text-[#d8d3c6]">{row.name}</span>
-                <span className={`flex-none ml-auto text-[12px] font-bold ${dungeonTotalClass(row.total)}`}>
+                <span className="min-w-0 text-[11px] leading-none truncate text-[#d8d3c6]">{row.name}</span>
+                <span
+                  className={`flex-none ml-auto text-[12px] font-bold leading-none ${dungeonTotalClass(row.total)}`}
+                >
                   {row.total}
                 </span>
               </div>
-              <BestRun run={row.best} runCount={row.runCount} />
+              <BestRun run={row.best} />
             </div>
           ))}
         </div>
@@ -140,10 +148,14 @@ export const MythicKeystone = ({ character }: IMythicKeystoneProps) => {
         {detail ? (
           <>
             <span className="min-w-0 text-[10px] font-medium truncate text-[#9c9484]">{detail.name}</span>
-            <span className="flex-none ml-auto text-[9.5px] text-[#6f6141] whitespace-nowrap">{detail.dates}</span>
+            <span className="flex-none ml-auto text-[9.5px] text-[#6f6141] whitespace-nowrap">
+              {detail.best
+                ? `+${detail.best.level} · ${detail.best.time} · ${detail.total} score`
+                : 'no run this season'}
+            </span>
           </>
         ) : (
-          <span className="text-[10.5px] text-[#5f5744]">Hover a dungeon for its run dates</span>
+          <span className="text-[10.5px] text-[#5f5744]">Hover a dungeon for its run</span>
         )}
       </div>
     </motion.div>

@@ -27,3 +27,4 @@ localhost.pem
 dist-*.zip
 releases/
 .env
+design/

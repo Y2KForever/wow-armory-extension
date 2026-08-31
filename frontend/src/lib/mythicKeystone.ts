@@ -4,6 +4,7 @@ export type KeystoneRun = NonNullable<NonNullable<ApiCharacter['mythic_keystone'
 
 export interface AffixRun {
   level: number;
+  date: string;
   time: string;
   timed: boolean;
   upgrades: number;
@@ -14,9 +15,7 @@ export interface DungeonRow {
   dungeonId: number;
   name: string;
   best: AffixRun | null;
-  runCount: number;
   total: number;
-  dates: string;
 }
 
 export interface KeystoneSummary {
@@ -47,6 +46,7 @@ const formatDate = (ms: number): string =>
 
 const toAffixRun = (run: KeystoneRun): AffixRun => ({
   level: run.level,
+  date: formatDate(run.completed_at),
   time: formatDuration(run.duration),
   timed: run.timed,
   upgrades: run.upgrades,
@@ -72,13 +72,7 @@ export const summariseKeystone = (keystone: ApiCharacter['mythic_keystone']): Ke
       dungeonId,
       name: best.dungeon,
       best: toAffixRun(best),
-      runCount: runs.length,
       total: Math.round(best.rating),
-      dates: runs
-        .slice()
-        .sort((a, b) => b.completed_at - a.completed_at)
-        .map((run) => `+${run.level} ${formatDate(run.completed_at)}`)
-        .join(' · '),
     };
   });
 
@@ -103,14 +97,13 @@ export const ratingClass = (rating: number): string => {
 };
 
 export const dungeonTotalClass = (total: number): string => {
-  if (total >= 380) return 'text-blizzard-yellow';
+  if (total >= 320) return 'text-blizzard-yellow';
   return total > 0 ? 'text-[#c3bdad]' : 'text-[#5a5445]';
 };
 
 export const keyLevelClass = (run: AffixRun | null): string => {
   if (!run) return 'text-[#5a5445]';
-  if (!run.timed) return 'text-[#c41e3b]';
-  return run.upgrades >= 2 ? 'text-blizzard-yellow' : 'text-[#d8d3c6]';
+  return run.timed ? 'text-blizzard-yellow' : 'text-[#c41e3b]';
 };
 
 export const timeClass = (run: AffixRun | null): string =>
