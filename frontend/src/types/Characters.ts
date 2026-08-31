@@ -124,6 +124,16 @@ type ApiCharacter = {
     hero_talents: number[];
     spec_talents: number[];
     loadout_code: string;
+    // Every loadout saved against the active spec. Absent on characters
+    // written before loadouts were ingested. Blizzard sends no name or
+    // timestamp per loadout, only is_active and the code.
+    loadouts?: {
+      active: boolean;
+      code: string;
+      class_talents: { id: number; rank: number }[];
+      spec_talents: { id: number; rank: number }[];
+      hero_talents: { id: number; rank: number }[];
+    }[];
   };
 } & {
   [slot: string]: {
