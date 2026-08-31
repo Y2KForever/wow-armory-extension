@@ -105,6 +105,17 @@ export type ApiCharacterTalents = {
     spec_talents: number[];
     hero_talents: number[];
     loadout_code: string;
+    /**
+     * Every loadout saved against the active spec. Blizzard sends only
+     * is_active and the code per loadout — no name, no timestamp.
+     */
+    loadouts: {
+      active: boolean;
+      code: string;
+      class_talents: { id: number; rank: number }[];
+      spec_talents: { id: number; rank: number }[];
+      hero_talents: { id: number; rank: number }[];
+    }[];
   };
 };
 

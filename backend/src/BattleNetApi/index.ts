@@ -340,6 +340,26 @@ class BattleNetApi {
         return talents.map((talent) => talent.tooltip?.talent.id).filter((id): id is number => id !== undefined);
       };
 
+      // Keep the rank Blizzard sends. Dropping it is why a partially ranked
+      // talent could only ever be shown at full rank, and why the point spread
+      // could not be counted at all.
+      const extractTalents = (talents: Talents[] | undefined) =>
+        (talents ?? [])
+          .map((talent) => ({ id: talent.tooltip?.talent.id, rank: talent.rank ?? 1 }))
+          .filter((talent): talent is { id: number; rank: number } => talent.id !== undefined);
+
+      // Every loadout saved against the active spec, not just the selected one.
+      // Blizzard sends no name or timestamp for a loadout — only the code and
+      // is_active — so the panel numbers them.
+      const activeSpec = data.specializations?.find((spec) => spec.specialization.id === activeSpecId);
+      const loadouts = (activeSpec?.loadouts ?? []).map((loadout) => ({
+        active: !!loadout.is_active,
+        code: loadout.talent_loadout_code,
+        class_talents: extractTalents(loadout.selected_class_talents),
+        spec_talents: extractTalents(loadout.selected_spec_talents),
+        hero_talents: extractTalents(loadout.selected_hero_talents),
+      }));
+
       const classTalents = extractTalentIds(activeLoadout.selected_class_talents);
       const specTalents = extractTalentIds(activeLoadout.selected_spec_talents);
       const heroTalents = extractTalentIds(activeLoadout.selected_hero_talents);
@@ -348,10 +368,13 @@ class BattleNetApi {
         talents: {
           id: activeSpecId,
           hero_id: activeHeroTalentId,
+          // The flat active-loadout fields stay so a panel deployed before this
+          // change keeps working until both sides are out.
           class_talents: classTalents,
           spec_talents: specTalents,
           hero_talents: heroTalents,
           loadout_code: activeLoadout.talent_loadout_code,
+          loadouts,
         },
       };
     } catch (err) {
