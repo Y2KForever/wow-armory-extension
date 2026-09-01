@@ -70,10 +70,10 @@
     "@smithy/types" "^4.17.2"
     tslib "^2.6.2"
 
-"@aws-sdk/client-secrets-manager@^3.1118.0":
-  version "3.1118.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/client-secrets-manager/-/client-secrets-manager-3.1118.0.tgz#7ad2967a9c5e982e108748cc9711b4515afe4c4d"
-  integrity sha512-1pjMM17NTaX8Vj2xykftAkSE56XSqqZVb5B4lduoTYaQQm/t/cK9zOV5PuwjSjoFT7egisX1S9frYWTDtg2vlg==
+"@aws-sdk/client-secrets-manager@^3.1121.0":
+  version "3.1121.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/client-secrets-manager/-/client-secrets-manager-3.1121.0.tgz#c140b8e69b710248d455c344e97e99e798e33e6a"
+  integrity sha512-kx66Imv5DomVdd5uwai10Dhf0zZg9Z3EODxJCYRGjmaD0GR08GkvuIPPIqE+ZmpHANCWbur9UKpgyXGJzk60pg==
   dependencies:
     "@aws-sdk/core" "^3.977.9"
     "@aws-sdk/credential-provider-node" "^3.972.81"
