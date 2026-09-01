@@ -197,10 +197,10 @@
     "@babel/helper-string-parser" "^7.29.7"
     "@babel/helper-validator-identifier" "^7.29.7"
 
-"@date-fns/tz@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@date-fns/tz/-/tz-1.2.0.tgz#81cb3211693830babaf3b96aff51607e143030a6"
-  integrity sha512-LBrd7MiJZ9McsOgxqWX7AaxrDjcFVjWH/tIKJd7pnR7McaslGYOP1QmmiBXdJH/H/yLCT+rcQ7FaPBUxRGUtrg==
+"@date-fns/tz@^1.4.1":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@date-fns/tz/-/tz-1.5.0.tgz#e9e79b7583f0b1322c53db884a0112551095e3f3"
+  integrity sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg==
 
 "@emnapi/core@^1.11.1":
   version "1.11.3"
@@ -1299,6 +1299,11 @@
   resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.63.0.tgz#2cfd1741b6693f78debdde1a5d4faa05bb75a349"
   integrity sha512-hncn90N4sOky0L2LKE5oESKLbxCPeVo4eLA2LSMoDzM+879ml4WSr+Rr4DWknNIVVvS1Hirkc9hx02W6YxS8rQ==
 
+"@tabby_ai/hijri-converter@1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@tabby_ai/hijri-converter/-/hijri-converter-1.0.5.tgz#b664994892348a402ae7529e648c819eee39208b"
+  integrity sha512-r5bClKrcIusDoo049dSL8CawnHR6mRdDwhlQuIgZRNty68q0x8k3Lf1BtPAMxRf/GgnHBnIO4ujd3+GQdLWzxQ==
+
 "@tailwindcss/node@4.3.3":
   version "4.3.3"
   resolved "https://registry.yarnpkg.com/@tailwindcss/node/-/node-4.3.3.tgz#38ff04309ff036ea3589a7bad9069c44ec9d3883"
@@ -2087,7 +2092,7 @@ csstype@^3.0.2, csstype@^3.2.2:
   resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.2.3.tgz#ec48c0f3e993e50648c86da559e2610995cf989a"
   integrity sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==
 
-date-fns-jalali@^4.1.0-0:
+date-fns-jalali@4.1.0-0:
   version "4.1.0-0"
   resolved "https://registry.yarnpkg.com/date-fns-jalali/-/date-fns-jalali-4.1.0-0.tgz#9c7fb286004fab267a300d3e9f1ada9f10b4b6b0"
   integrity sha512-hTIP/z+t+qKwBDcmmsnmjWTduxCg+5KfdqWQvb2X/8C9+knYY6epN/pfxdDuyVlSVeFz0sM5eEfwIUQ70U4ckg==
@@ -2992,14 +2997,15 @@ queue-microtask@^1.2.2:
   resolved "https://registry.yarnpkg.com/queue-microtask/-/queue-microtask-1.2.3.tgz#4929228bbc724dfac43e0efb058caf7b6cfb6243"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
 
-react-day-picker@9.6.3:
-  version "9.6.3"
-  resolved "https://registry.yarnpkg.com/react-day-picker/-/react-day-picker-9.6.3.tgz#df9b84c1c224e8f342fffcc725dcdda4dd9a42c0"
-  integrity sha512-rDqCSKAl5MLX0z1fLkYcBenQK4ANlYaAhUR0ruVSVAhAa7/ZmKQqgDpXPoS7bYEkgBRH06LO1qNFP1Ki8uiZpw==
+react-day-picker@9.14.0:
+  version "9.14.0"
+  resolved "https://registry.yarnpkg.com/react-day-picker/-/react-day-picker-9.14.0.tgz#b2975b48366d0c3a180520e1a4063b5a7d6c5a57"
+  integrity sha512-tBaoDWjPwe0M5pGrum4H0SR6Lyk+BO9oHnp9JbKpGKW2mlraNPgP9BMfsg5pWpwrssARmeqk7YBl2oXutZTaHA==
   dependencies:
-    "@date-fns/tz" "^1.2.0"
+    "@date-fns/tz" "^1.4.1"
+    "@tabby_ai/hijri-converter" "1.0.5"
     date-fns "^4.1.0"
-    date-fns-jalali "^4.1.0-0"
+    date-fns-jalali "4.1.0-0"
 
 react-dom@^19.2.8:
   version "19.2.8"
