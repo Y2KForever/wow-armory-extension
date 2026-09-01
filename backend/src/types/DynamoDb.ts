@@ -9,6 +9,7 @@ export type ddbProfile = {
   state: string;
   updated_at: string;
   forced_update: string;
+  battletag?: string;
 };
 
 export type DynamoInstance = {

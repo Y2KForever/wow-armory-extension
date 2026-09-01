@@ -5,6 +5,7 @@ export type User = {
   createdAt: string;
   updatedAt: string;
   region: string;
+  battletag: string;
   authorized: boolean;
   characters: ApiCharacter[];
   forcedUpdate: string;

@@ -120,7 +120,6 @@ export const buildLoadouts = (character: ApiCharacter, talents: ApiTalents | nul
         {
           active: true,
           code: legacy?.loadout_code ?? '',
-          // Legacy rows carry ids without ranks; assume a single point each.
           picks: {
             class: (legacy?.class_talents ?? []).map((id) => ({ id, rank: 1 })),
             spec: (legacy?.spec_talents ?? []).map((id) => ({ id, rank: 1 })),
@@ -132,7 +131,6 @@ export const buildLoadouts = (character: ApiCharacter, talents: ApiTalents | nul
   const heroTrees = talents.hero_talents ?? [];
 
   return raw.map((loadout, index) => {
-    // Which hero tree this loadout picked — whichever contains its hero talents.
     const heroTree = heroTrees.find((tree) =>
       (tree.talents ?? []).some((node) =>
         (node.ranks ?? []).some((rank) =>
