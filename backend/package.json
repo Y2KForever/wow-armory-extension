@@ -10,7 +10,7 @@
     "deploy": "sam build && sam deploy"
   },
   "devDependencies": {
-    "@tsconfig/node20": "^20.1.5",
+    "@tsconfig/node20": "^20.1.10",
     "@types/aws-lambda": "^8.10.162",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.20.1",
