@@ -10,6 +10,4 @@ const MythicKeystoneViewComponent = ({ character }: IMythicKeystoneView) => {
   return <MythicKeystone character={character} />;
 };
 
-export const MythicKeystoneView = React.memo(MythicKeystoneViewComponent, (prevProps, nextProps) => {
-  return prevProps.character.character_id === nextProps.character.character_id;
-});
+export const MythicKeystoneView = React.memo(MythicKeystoneViewComponent);

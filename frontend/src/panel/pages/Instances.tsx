@@ -11,6 +11,4 @@ const InstanceViewComponent = ({ character, type = InstanceType.RAID }: IInstanc
   return <Instances character={character} type={type} />;
 };
 
-export const InstanceView = React.memo(InstanceViewComponent, (prevProps, nextProps) => {
-  return prevProps.character.character_id === nextProps.character.character_id && prevProps.type === nextProps.type;
-});
+export const InstanceView = React.memo(InstanceViewComponent);

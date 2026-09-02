@@ -10,6 +10,4 @@ const TalentViewComponent = ({ character }: ITalentView) => {
   return <Talents character={character} />;
 };
 
-export const TalentView = React.memo(TalentViewComponent, (prevProps, nextProps) => {
-  return prevProps.character.character_id === nextProps.character.character_id;
-});
+export const TalentView = React.memo(TalentViewComponent);

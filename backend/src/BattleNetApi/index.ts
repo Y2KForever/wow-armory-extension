@@ -126,14 +126,15 @@ class BattleNetApi {
     assets: { key: string; value: string }[],
     getS3Key: (asset: { key: string; value: string }) => string,
     client: S3Client,
+    refresh = false,
   ): Promise<Record<string, string>> {
     const uploadPromises = assets.map(async (asset) => {
       const s3Key = getS3Key(asset);
       const filename = s3Key.split('/').pop()!;
       const imageExist = await checkIfImageExist(s3Key, client);
-      if (!imageExist || filename.includes('main-raw')) {
+      if (!imageExist || refresh || filename.includes('main-raw')) {
         const imageBuffer = await downloadImage(asset.value);
-        await uploadImage(s3Key, imageBuffer, client);
+        await uploadImage(s3Key, imageBuffer, client, refresh);
       }
       return { key: asset.key, filename };
     });
@@ -274,6 +275,7 @@ class BattleNetApi {
         data.assets,
         (asset) => `characters/${character.id}-${asset.key}.${asset.value.split('.').pop()?.toLowerCase()}`,
         client,
+        true,
       );
       return mediaMap;
     } catch (err) {
