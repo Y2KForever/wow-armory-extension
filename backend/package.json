@@ -10,7 +10,7 @@
     "deploy": "sam build && sam deploy"
   },
   "devDependencies": {
-    "@tsconfig/node20": "^20.1.5",
+    "@tsconfig/node20": "^20.1.10",
     "@types/aws-lambda": "^8.10.162",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.20.1",
@@ -21,9 +21,9 @@
   "dependencies": {
     "@aws-lambda-powertools/logger": "^2.35.0",
     "@aws-lambda-powertools/tracer": "^2.35.0",
-    "@aws-sdk/client-dynamodb": "^3.1118.0",
-    "@aws-sdk/client-s3": "^3.1120.0",
-    "@aws-sdk/client-secrets-manager": "^3.1118.0",
+    "@aws-sdk/client-dynamodb": "^3.1121.0",
+    "@aws-sdk/client-s3": "^3.1121.0",
+    "@aws-sdk/client-secrets-manager": "^3.1121.0",
     "@aws-sdk/util-dynamodb": "^3.996.9",
     "@middy/core": "^6.x.x",
     "@middy/error-logger": "^6.x.x",

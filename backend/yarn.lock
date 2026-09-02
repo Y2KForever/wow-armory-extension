@@ -37,10 +37,10 @@
     "@smithy/types" "^4.17.2"
     tslib "^2.6.2"
 
-"@aws-sdk/client-dynamodb@^3.1118.0":
-  version "3.1118.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/client-dynamodb/-/client-dynamodb-3.1118.0.tgz#0e8c5322a1875d2603388a805e8b2188de16130f"
-  integrity sha512-svEO204aN18SV433vZ1+VRCdRrMhQto52pTDOJwkwO5FcydmZa+Ld+lWu0k6OC50Ft4qJb1WrG2lsEno/++lGg==
+"@aws-sdk/client-dynamodb@^3.1121.0":
+  version "3.1121.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/client-dynamodb/-/client-dynamodb-3.1121.0.tgz#e0e2f6d75a08fbecd35230f0e6145bc6dfe97c39"
+  integrity sha512-q8s4cKsn0TdQ+QByWEUeajZMFrmF2GzDovrlfWMA7Pv3GfG5sADjbWAZxJXA9JsLGb4QT5ovTpOdArNqjbojZw==
   dependencies:
     "@aws-sdk/core" "^3.977.9"
     "@aws-sdk/credential-provider-node" "^3.972.81"
@@ -53,10 +53,10 @@
     "@smithy/types" "^4.17.2"
     tslib "^2.6.2"
 
-"@aws-sdk/client-s3@^3.1120.0":
-  version "3.1120.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/client-s3/-/client-s3-3.1120.0.tgz#2e4080c5c9d1b75d2371d85fad07dbd145fd44f6"
-  integrity sha512-UunWgNl/U8wIlxVRyhUPqlozFkUS88UqXjAH50XfPDXaZeK9P7KVYTAh4KREVrLPQTzPxVSbQGog3gHlc/P6vg==
+"@aws-sdk/client-s3@^3.1121.0":
+  version "3.1121.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/client-s3/-/client-s3-3.1121.0.tgz#6fc78ca0169448f3eb07dd5e9f519e870eb1b21e"
+  integrity sha512-hBnoqaVBeWdkgXcJElMXA2yUZWkBCBntu2qmN+tfqmzC+j4LzJC3ox8qIgS2WdMS1cb8UwyBogUVrkRXybNm0A==
   dependencies:
     "@aws-sdk/checksums" "^3.1000.29"
     "@aws-sdk/core" "^3.977.9"
@@ -70,10 +70,10 @@
     "@smithy/types" "^4.17.2"
     tslib "^2.6.2"
 
-"@aws-sdk/client-secrets-manager@^3.1118.0":
-  version "3.1118.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/client-secrets-manager/-/client-secrets-manager-3.1118.0.tgz#7ad2967a9c5e982e108748cc9711b4515afe4c4d"
-  integrity sha512-1pjMM17NTaX8Vj2xykftAkSE56XSqqZVb5B4lduoTYaQQm/t/cK9zOV5PuwjSjoFT7egisX1S9frYWTDtg2vlg==
+"@aws-sdk/client-secrets-manager@^3.1121.0":
+  version "3.1121.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/client-secrets-manager/-/client-secrets-manager-3.1121.0.tgz#c140b8e69b710248d455c344e97e99e798e33e6a"
+  integrity sha512-kx66Imv5DomVdd5uwai10Dhf0zZg9Z3EODxJCYRGjmaD0GR08GkvuIPPIqE+ZmpHANCWbur9UKpgyXGJzk60pg==
   dependencies:
     "@aws-sdk/core" "^3.977.9"
     "@aws-sdk/credential-provider-node" "^3.972.81"
@@ -528,10 +528,10 @@
   dependencies:
     tslib "^2.6.2"
 
-"@tsconfig/node20@^20.1.5":
-  version "20.1.5"
-  resolved "https://registry.yarnpkg.com/@tsconfig/node20/-/node20-20.1.5.tgz#6e5dc3c90088865669c555a156252f75d1a84c0a"
-  integrity sha512-Vm8e3WxDTqMGPU4GATF9keQAIy1Drd7bPwlgzKJnZtoOsTm1tduUTbDjg0W5qERvGuxPI2h9RbMufH0YdfBylA==
+"@tsconfig/node20@^20.1.10":
+  version "20.1.10"
+  resolved "https://registry.yarnpkg.com/@tsconfig/node20/-/node20-20.1.10.tgz#e41fb85a1f224b4f0704f7b33df71da8a55891b6"
+  integrity sha512-5OZgdnxbFuvwm05iVwPXMU5/7iPuVDDZzAnxPDLj+kjN7fwQZSSVgHQhKTNkBPOO6Qef2D5MxPAoPLCGqE2VuQ==
 
 "@types/aws-lambda@^8.10.162":
   version "8.10.162"
