@@ -1,5 +1,5 @@
 import { TwitchAuthContext } from '../App';
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { useGetProfileQuery } from '@/store/api/profile';
 import { Spinner } from '@/assets/icons/Spinner';
 import { ApiCharacter, InstanceType } from '@/types/Characters';
@@ -13,6 +13,7 @@ import { CharacterView } from './Character';
 import { TalentView } from './Talents';
 import { InstanceView } from './Instances';
 import { MythicKeystoneView } from './MythicKeystone';
+import { useCharacterRemoval } from '../hooks/useCharacterRemoval';
 
 export const Panel = () => {
   const twitchAuth = useContext(TwitchAuthContext);
@@ -26,11 +27,23 @@ export const Panel = () => {
   });
   const [view, setView] = useState<Views>(Views.LIST);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const removal = useCharacterRemoval();
+  const roster = useMemo(
+    () => (data?.characters ?? []).filter((character) => !removal.hidden.has(character.character_id)),
+    [data, removal.hidden],
+  );
   const selectedCharacter = useMemo(
     () => data?.characters?.find((character) => character.character_id === selectedId) ?? null,
     [data, selectedId],
   );
   const setSelectedCharacter = (character: ApiCharacter | null) => setSelectedId(character?.character_id ?? null);
+
+  useEffect(() => {
+    if (view !== Views.LIST && selectedId !== null && data && !selectedCharacter) {
+      setView(Views.LIST);
+      setSelectedId(null);
+    }
+  }, [view, selectedId, data, selectedCharacter]);
   if (isProfileLoading) {
     return (
       <div className="flex flex-1 justify-center">
@@ -59,16 +72,23 @@ export const Panel = () => {
     <Frame
       header={
         view === Views.LIST ? (
-          <RosterHeader characters={data?.characters ?? []} />
+          <RosterHeader characters={roster} />
         ) : (
           <MenuHeader selectedCharacter={selectedCharacter} setView={setView} view={view} />
         )
       }
+      footer={view === Views.LIST ? removal.footer : null}
+      overlay={view === Views.LIST ? removal.overlay : null}
     >
       {view === Views.LIST && (
         <SimpleBar className="flex-1 min-h-0" style={{ width: '100%' }}>
-          {data?.characters ? (
-            <CharactersView setCharacter={setSelectedCharacter} characters={data.characters} setView={setView} />
+          {roster.length > 0 ? (
+            <CharactersView
+              setCharacter={setSelectedCharacter}
+              characters={roster}
+              setView={setView}
+              onAsk={removal.ask}
+            />
           ) : (
             <div className="flex flex-col items-center w-full mt-2">
               <p className="text-xs text-white">Streamer has not imported any characters.</p>

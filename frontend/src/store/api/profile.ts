@@ -52,6 +52,14 @@ export const profileApi = createApi({
         },
       }),
     }),
+    deleteCharacter: builder.mutation<{ characterId: number }, number>({
+      query: (characterId: number) => ({
+        url: 'characters',
+        method: 'DELETE',
+        params: { characterId },
+      }),
+      invalidatesTags: [{ type: 'profile' }],
+    }),
     getForceUpdate: builder.mutation({
       query: (characterId: number) => ({
         url: 'force-update',
@@ -67,4 +75,9 @@ export const profileApi = createApi({
   }),
 });
 
-export const { useGetProfileQuery, useLazyGetGenerateSignedUrlQuery, useGetForceUpdateMutation } = profileApi;
+export const {
+  useGetProfileQuery,
+  useLazyGetGenerateSignedUrlQuery,
+  useGetForceUpdateMutation,
+  useDeleteCharacterMutation,
+} = profileApi;
