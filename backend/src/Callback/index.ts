@@ -72,6 +72,20 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
 
     const respJSON = (await tokenResponse.json()) as TokenResponse;
 
+    let battletag = '';
+    try {
+      const userInfo = await fetch(`https://${baseUrl}/oauth/userinfo`, {
+        headers: { Authorization: `Bearer ${respJSON.access_token}` },
+      });
+      if (userInfo.ok) {
+        battletag = ((await userInfo.json()) as { battletag?: string }).battletag ?? '';
+      } else {
+        console.error(`userinfo failed: ${userInfo.status} ${userInfo.statusText}`);
+      }
+    } catch (err) {
+      console.error('Failed to fetch battletag:', err);
+    }
+
     const now = new Date().toISOString();
 
     const updateItemParams = new UpdateItemCommand({
@@ -85,6 +99,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
               updated_at = :updated_at,
               expires_in = :expires_in,
               forced_update = :forced_update,
+              battletag = :battletag,
               ${'created_at = if_not_exists(created_at, :created_at)'}
          `,
       ExpressionAttributeNames: {
@@ -92,6 +107,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
       },
       ExpressionAttributeValues: {
         ':st': { S: respJSON.access_token },
+        ':battletag': { S: battletag },
         ':expires_in': { N: (Math.floor(Date.now() / 1000) + respJSON.expires_in).toString() },
         ':updated_at': { S: now },
         ':created_at': { S: now },
@@ -104,7 +120,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     return {
       statusCode: 302,
       headers: {
-        Location: `https://landing.y2kforever.com?state=success`,
+        Location: `https://landing.y2kforever.com?state=success&region=${simplifiedResponse.region ?? ''}&battletag=${encodeURIComponent(battletag)}`,
       },
     };
   } catch (err) {
