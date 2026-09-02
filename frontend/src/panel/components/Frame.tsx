@@ -3,12 +3,14 @@ import { ReactNode } from 'react';
 interface IFrameProps {
   header: ReactNode;
   children: ReactNode;
+  footer?: ReactNode;
+  overlay?: ReactNode;
 }
 
-export const Frame = ({ header, children }: IFrameProps) => {
+export const Frame = ({ header, children, footer, overlay }: IFrameProps) => {
   return (
     <div
-      className="flex flex-col w-full h-[500px] overflow-hidden border border-blizzard-bezel font-semplicita text-[#e8e4da]"
+      className="relative flex flex-col w-full h-[500px] overflow-hidden border border-blizzard-bezel font-semplicita text-[#e8e4da]"
       style={{
         background: 'radial-gradient(130% 70% at 50% 0%, #171a22 0%, #08090c 72%)',
         boxShadow: 'inset 0 0 0 1px #0a0b0e, inset 0 0 34px rgba(0,0,0,.85)',
@@ -27,6 +29,8 @@ export const Frame = ({ header, children }: IFrameProps) => {
         }}
       />
       <div className="flex flex-col flex-1 min-h-0">{children}</div>
+      {footer}
+      {overlay}
     </div>
   );
 };

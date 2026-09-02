@@ -337,6 +337,7 @@ Resources:
                   - dynamodb:UpdateItem
                   - dynamodb:PutItem
                   - dynamodb:Query
+                  - dynamodb:DeleteItem
                 Resource:
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
@@ -409,6 +410,22 @@ Resources:
           Properties:
             Path: /characters
             Method: POST
+            RestApiId:
+              Ref: API
+
+  DeleteCharacterFunction:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/DeleteCharacter/index.handler
+      Description: Removes one imported character for the signed-in broadcaster.
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        DeleteCharacter:
+          Type: Api
+          Properties:
+            Path: /characters
+            Method: DELETE
             RestApiId:
               Ref: API
 

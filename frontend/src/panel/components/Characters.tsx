@@ -4,9 +4,11 @@ import { ApiCharacter } from '@/types/Characters';
 type CharacterRowProps = {
   character: ApiCharacter;
   onSelect: () => void;
+  canRemove: boolean;
+  onAsk: (character: ApiCharacter) => void;
 };
 
-export const CharacterRow = ({ character, onSelect }: CharacterRowProps) => {
+export const CharacterRow = ({ character, onSelect, canRemove, onAsk }: CharacterRowProps) => {
   const classToken = removeSpace(character.class);
 
   return (
@@ -30,7 +32,7 @@ export const CharacterRow = ({ character, onSelect }: CharacterRowProps) => {
         />
       </div>
 
-      <div className="flex flex-col min-w-0">
+      <div className="flex flex-col flex-1 min-w-0">
         <div className="flex items-center gap-[5px] min-w-0">
           <span
             className={`font-friz text-[17px] leading-tight truncate text-class-${classToken}`}
@@ -51,11 +53,50 @@ export const CharacterRow = ({ character, onSelect }: CharacterRowProps) => {
         </span>
       </div>
 
-      <div className="flex flex-col items-center flex-none py-[2px] px-[7px] ml-auto border border-[rgba(138,109,20,.6)] bg-black/40">
-        <span className="text-[15px] font-bold leading-[1.1] text-blizzard-yellow">{character.equip_item_level}</span>
-        <span className="text-[8.5px] font-medium tracking-[.14em] text-blizzard-gold-mute">ILVL</span>
-      </div>
+      <IlvlPlate character={character} canRemove={canRemove} onAsk={onAsk} />
     </div>
+  );
+};
+
+const IlvlPlate = ({ character, canRemove, onAsk }: Omit<CharacterRowProps, 'onSelect'>) => {
+  const ilvl = (
+    <>
+      <span className="text-[15px] font-bold leading-[1.05] text-blizzard-yellow">{character.equip_item_level}</span>
+      <span className="text-[8.5px] font-medium tracking-[.14em] text-blizzard-gold-mute">ILVL</span>
+    </>
+  );
+
+  if (!canRemove) {
+    return (
+      <div className="flex flex-col items-center justify-center flex-none w-[40px] h-[32px] ml-auto border border-[rgba(138,109,20,.6)] bg-black/40">
+        {ilvl}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      title={`Remove ${Capitalize(character.name)}`}
+      onClick={(event) => {
+        event.stopPropagation();
+        onAsk(character);
+      }}
+      className="flex flex-col items-center justify-center flex-none w-[40px] h-[32px] ml-auto border border-[rgba(138,109,20,.6)] bg-black/40 hover:cursor-pointer hover:border-[#c41e3b] hover:bg-[rgba(120,20,30,.4)]"
+    >
+      <span className="hidden text-[#e8867c] group-hover:flex">
+        <svg
+          viewBox="0 0 24 24"
+          width="13"
+          height="13"
+          className="fill-none stroke-current"
+          strokeWidth={2.2}
+          strokeLinecap="round"
+        >
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </span>
+      <span className="flex flex-col items-center group-hover:hidden">{ilvl}</span>
+    </button>
   );
 };
 
@@ -63,9 +104,11 @@ type RealmGroupProps = {
   realm: string;
   characters: ApiCharacter[];
   onSelect: (character: ApiCharacter) => void;
+  canRemove: boolean;
+  onAsk: (character: ApiCharacter) => void;
 };
 
-export const RealmGroup = ({ realm, characters, onSelect }: RealmGroupProps) => {
+export const RealmGroup = ({ realm, characters, onSelect, canRemove, onAsk }: RealmGroupProps) => {
   return (
     <div className="flex flex-col flex-none">
       {realm && (
@@ -84,7 +127,13 @@ export const RealmGroup = ({ realm, characters, onSelect }: RealmGroupProps) => 
         </div>
       )}
       {characters.map((character) => (
-        <CharacterRow key={character.character_id} character={character} onSelect={() => onSelect(character)} />
+        <CharacterRow
+          key={character.character_id}
+          character={character}
+          onSelect={() => onSelect(character)}
+          canRemove={canRemove}
+          onAsk={onAsk}
+        />
       ))}
     </div>
   );

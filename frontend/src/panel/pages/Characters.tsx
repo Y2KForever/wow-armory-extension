@@ -1,14 +1,16 @@
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import { ApiCharacter } from '@/types/Characters';
 import { Views } from '@/types/User';
 import { RealmGroup } from '../components/Characters';
 import { WowIcon } from '@/assets/icons/WowIcon';
+import { TwitchAuthContext } from '../App';
 
 interface IListViewProps {
   characters: ApiCharacter[];
   setView: React.Dispatch<React.SetStateAction<Views>>;
   setCharacter: (character: ApiCharacter | null) => void;
+  onAsk: (character: ApiCharacter) => void;
 }
 
 export const RosterHeader = ({ characters }: { characters: ApiCharacter[] }) => {
@@ -26,7 +28,10 @@ export const RosterHeader = ({ characters }: { characters: ApiCharacter[] }) => 
   );
 };
 
-export const CharactersView = ({ characters, setView, setCharacter }: IListViewProps) => {
+export const CharactersView = ({ characters, setView, setCharacter, onAsk }: IListViewProps) => {
+  const twitchAuth = useContext(TwitchAuthContext);
+  const isStreamer = `U${twitchAuth.channelId}` === twitchAuth.userId;
+
   const groups = useMemo(() => {
     const byRealm = new Map<string, ApiCharacter[]>();
     for (const character of characters) {
@@ -57,6 +62,8 @@ export const CharactersView = ({ characters, setView, setCharacter }: IListViewP
             setCharacter(character);
             setView(Views.CHARACTER);
           }}
+          canRemove={isStreamer}
+          onAsk={onAsk}
         />
       ))}
     </motion.div>
