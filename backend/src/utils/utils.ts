@@ -210,7 +210,12 @@ export const getContentType = (filename: string): string => {
   }
 };
 
-export const uploadImage = async (filename: string, imageBuffer: Buffer, client: S3Client): Promise<void> => {
+export const uploadImage = async (
+  filename: string,
+  imageBuffer: Buffer,
+  client: S3Client,
+  noCache = false,
+): Promise<void> => {
   if (!process.env['BUCKET_NAME']) {
     throw new Error(`No bucket name set. Server error`);
   }
@@ -221,7 +226,8 @@ export const uploadImage = async (filename: string, imageBuffer: Buffer, client:
         Key: filename,
         Body: imageBuffer,
         ContentType: getContentType(filename),
-        CacheControl: filename.includes('main-raw') ? 'max-age=0, no-cache, no-store, must-revalidate' : undefined,
+        CacheControl:
+          noCache || filename.includes('main-raw') ? 'max-age=0, no-cache, no-store, must-revalidate' : undefined,
       }),
     );
   } catch (err) {
