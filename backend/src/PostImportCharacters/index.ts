@@ -74,7 +74,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
 
           const isRetail = character.namespace === 'retail';
 
-          const [mediaData, items, summary, raids, dungeons, talents, keystone] = await Promise.all([
+          const [mediaData, items, summary, raids, dungeons, talents, keystone, achievements] = await Promise.all([
             BattleNetApiManager.fetchCharacterMedia(character, body.region, baseUrl, appToken),
             BattleNetApiManager.fetchCharacterItems(character, body.region, baseUrl, appToken),
             BattleNetApiManager.fetchCharacterSummary(character, body.region, baseUrl, appToken),
@@ -86,6 +86,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
             isRetail
               ? BattleNetApiManager.fetchCharacterMythicKeystone(character, body.region, baseUrl, appToken)
               : undefined,
+            BattleNetApiManager.fetchCharacterAchievements(character, body.region, baseUrl, appToken),
           ]);
 
           return {
@@ -98,6 +99,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
             ...raids,
             ...dungeons,
             ...keystone,
+            ...achievements,
           };
         } catch (err) {
           console.log(err);

@@ -1,4 +1,4 @@
-import { ApiDungeons, ApiMythicKeystone } from './Api';
+import { ApiAchievements, ApiDungeons, ApiMythicKeystone } from './Api';
 import { Item } from './BattleNet';
 
 export type ddbProfile = {
@@ -45,6 +45,7 @@ export type DynamoCharacter = {
   forced_update?: string;
   mythic_keystone?: ApiMythicKeystone['mythic_keystone'];
   dungeons?: ApiDungeons['dungeons'];
+  achievements?: ApiAchievements['achievements'];
   achievement_points: number;
   avatar: string;
   avg_item_level: number;

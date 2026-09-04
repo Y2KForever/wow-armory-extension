@@ -105,10 +105,6 @@ export type ApiCharacterTalents = {
     spec_talents: number[];
     hero_talents: number[];
     loadout_code: string;
-    /**
-     * Every loadout saved against the active spec. Blizzard sends only
-     * is_active and the code per loadout — no name, no timestamp.
-     */
     loadouts: {
       active: boolean;
       code: string;
@@ -180,4 +176,34 @@ export type ApiMythicKeystone = {
 
 export type ApiDungeons = {
   dungeons: ApiRaids['raids'];
+};
+
+export type ApiAchievements = {
+  achievements: {
+    points: number;
+    earned_ids: number[];
+    recent: { id: number; name: string; completed: number; points: number; description: string; icon: string }[];
+  } | null;
+};
+
+export type AchievementDefinition = {
+  id: number;
+  name: string;
+  points: number;
+  description: string;
+  icon: string;
+};
+
+export type AchievementSubcategory = {
+  id: number;
+  name: string;
+  achievements: AchievementDefinition[];
+};
+
+export type AchievementCategory = {
+  category_id: number;
+  name: string;
+  display_order: number;
+  achievements: AchievementDefinition[];
+  subcategories: AchievementSubcategory[];
 };

@@ -55,7 +55,7 @@ const processCharacter = async (
       return null;
     }
 
-    const [mediaData, items, summary, talents, raids, dungeons, keystone] = await Promise.all([
+    const [mediaData, items, summary, talents, raids, dungeons, keystone, achievements] = await Promise.all([
       BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl, token),
@@ -63,9 +63,10 @@ const processCharacter = async (
       BattleNetApiManager.fetchCharacterRaids(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterDungeons(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterMythicKeystone(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterAchievements(apiChar, character.region, baseUrl, token),
     ]);
 
-    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents, ...raids, ...dungeons, ...keystone };
+    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents, ...raids, ...dungeons, ...keystone, ...achievements };
   } catch (err) {
     console.error(`Error processing character ${character.character_id}:`, err);
     throw err;

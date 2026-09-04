@@ -446,3 +446,37 @@ export type MythicKeystoneDungeon = {
     qualifying_duration: number;
   }[];
 };
+
+export type CharacterAchievements = {
+  total_quantity: number;
+  total_points: number;
+  achievements?: {
+    id: number;
+    achievement: { id: number; name: string };
+    completed_timestamp?: number;
+  }[];
+};
+
+export type AchievementCategoryIndex = {
+  root_categories?: { id: number; name: string }[];
+};
+
+export type AchievementCategoryDetail = {
+  id: number;
+  name: string;
+  display_order?: number;
+  is_guild_category?: boolean;
+  achievements?: { id: number; name: string }[];
+  subcategories?: { id: number; name: string }[];
+};
+
+export type AchievementDetail = {
+  id: number;
+  name: string;
+  points?: number;
+  description?: string;
+};
+
+export type AchievementMedia = {
+  assets?: { key: string; value: string }[];
+};
