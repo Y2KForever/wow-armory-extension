@@ -61,7 +61,7 @@
     "@types/react": "^19.2.18",
     "@types/react-color": "^3.0.13",
     "@types/react-dom": "^19.2.5",
-    "@types/react-virtualized": "^9.22.2",
+    "@types/react-virtualized": "^9.22.3",
     "@vitejs/plugin-react": "^5.2.0",
     "autoprefixer": "^10.5.4",
     "eslint": "^9.22.0",
