@@ -18,15 +18,12 @@ export interface SheetGroup {
 }
 
 export interface Loadout {
-  /** Index in save order — Blizzard sends no name, so the panel numbers them. */
   index: number;
   label: string;
   active: boolean;
   code: string;
-  /** Hero talent tree this loadout picks, when it can be resolved. */
   hero: string;
   groups: SheetGroup[];
-  /** Class / spec / hero point totals. */
   spread: { key: TreeKey; label: string; points: number }[];
 }
 
@@ -43,11 +40,6 @@ const TREES: { key: TreeKey; label: string }[] = [
 
 type Selected = { id: number; rank: number };
 
-/**
- * Talent ids in a loadout are *talent* ids, while the talents table is keyed by
- * node id — a node carries its talent id inside each rank's tooltip. This maps
- * one to the other so a loadout can be resolved to names and icons.
- */
 const indexTalents = (nodes: Talent[]) => {
   const byTalentId = new Map<number, { node: Talent; name: string; spellId: number | null }>();
 
@@ -95,11 +87,6 @@ const resolve = (selected: Selected[], nodes: Talent[]): SheetTalent[] => {
     .sort((a, b) => a.name.localeCompare(b.name));
 };
 
-/**
- * Loadouts for the character's active spec, resolved against the talent tree
- * data. Falls back to the single flat active loadout on characters written
- * before loadouts were ingested.
- */
 export const buildLoadouts = (character: ApiCharacter, talents: ApiTalents | null | undefined): Loadout[] => {
   if (!talents) return [];
 
@@ -165,7 +152,6 @@ export const buildLoadouts = (character: ApiCharacter, talents: ApiTalents | nul
   });
 };
 
-/** What the shown loadout adds and drops relative to the one being played. */
 export const diffLoadouts = (shown: Loadout | undefined, active: Loadout | undefined): LoadoutDiff => {
   if (!shown || !active || shown.index === active.index) {
     return { added: [], dropped: [] };

@@ -1,7 +1,15 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { setCharacters, setInstances, setTalents } from '../slices/characters';
 import { RootState } from '../store';
-import { ApiCharacter, ApiTalents, WowCharacter, InstanceType, RaidsByExpansion } from '@/types/Characters';
+import {
+  AchievementCategoryDetail,
+  AchievementTreeCategory,
+  ApiCharacter,
+  ApiTalents,
+  WowCharacter,
+  InstanceType,
+  RaidsByExpansion,
+} from '@/types/Characters';
 
 type GetCharactersProps = {
   region: string;
@@ -84,6 +92,19 @@ export const charactersApi = createApi({
         }
       },
     }),
+    fetchAchievementTree: builder.query<{ categories: AchievementTreeCategory[] }, void>({
+      query: () => ({
+        url: `/achievements`,
+        method: 'GET',
+      }),
+    }),
+    fetchAchievementCategory: builder.query<AchievementCategoryDetail, { categoryId: number }>({
+      query: ({ categoryId }) => ({
+        url: `/achievements`,
+        params: { categoryId },
+        method: 'GET',
+      }),
+    }),
     importCharacters: builder.mutation<void, ImportCharactersProps>({
       query: ({ characters, region }) => ({
         url: 'import-characters',
@@ -102,4 +123,6 @@ export const {
   useImportCharactersMutation,
   useFetchTalentsQuery,
   useFetchInstancesQuery,
+  useFetchAchievementTreeQuery,
+  useFetchAchievementCategoryQuery,
 } = charactersApi;

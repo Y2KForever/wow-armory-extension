@@ -132,6 +132,11 @@ type ApiCharacter = {
       hero_talents: { id: number; rank: number }[];
     }[];
   };
+  achievements?: {
+    points: number;
+    earned_ids: number[];
+    recent: { id: number; name: string; completed: number; points: number; description: string; icon: string }[];
+  } | null;
 } & {
   [slot: string]: {
     sockets?: {
@@ -370,4 +375,29 @@ export {
   type Spell,
   TalentType,
   InstanceType,
+};
+
+export type AchievementDefinition = {
+  id: number;
+  name: string;
+  points: number;
+  description: string;
+  icon: string;
+};
+
+export type AchievementTreeCategory = {
+  category_id: number;
+  name: string;
+  display_order: number;
+  ids: number[];
+  subcategories: { id: number; name: string; ids: number[] }[];
+};
+
+export type AchievementCategoryDetail = {
+  category_id: number;
+  name: string;
+  display_order: number;
+  total: number;
+  achievements: AchievementDefinition[];
+  subcategories: { id: number; name: string; achievements: AchievementDefinition[] }[];
 };
