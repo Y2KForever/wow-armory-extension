@@ -13,6 +13,7 @@ import { CharacterView } from './Character';
 import { TalentView } from './Talents';
 import { InstanceView } from './Instances';
 import { MythicKeystoneView } from './MythicKeystone';
+import { AchievementsView } from './Achievements';
 import { useCharacterRemoval } from '../hooks/useCharacterRemoval';
 
 export const Panel = () => {
@@ -102,6 +103,7 @@ export const Panel = () => {
         <InstanceView character={selectedCharacter} type={InstanceType.RAID} />
       )}
       {view === Views.MPLUS && selectedCharacter && <MythicKeystoneView character={selectedCharacter} />}
+      {view === Views.ACHIEVEMENTS && selectedCharacter && <AchievementsView character={selectedCharacter} />}
     </Frame>
   );
 };

@@ -1,5 +1,8 @@
 import { S3Client } from '@aws-sdk/client-s3';
 import {
+  AchievementCategory,
+  AchievementDefinition,
+  ApiAchievements,
   ApiCharacter,
   ApiCharacterStatus,
   ApiCharacterSummary,
@@ -11,6 +14,11 @@ import {
   ApiRaids,
 } from '../types/Api';
 import {
+  AchievementCategoryDetail,
+  AchievementCategoryIndex,
+  AchievementDetail,
+  AchievementMedia,
+  CharacterAchievements,
   CharacterSpecializations,
   CharactersResponse,
   CharacterStatus,
@@ -663,6 +671,170 @@ class BattleNetApi {
     token: string,
   ): Promise<ApiDungeons> {
     return { dungeons: await this.fetchEncounters(character, region, baseUrl, token, 'dungeons') };
+  }
+
+  public async fetchCharacterAchievements(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+  ): Promise<ApiAchievements> {
+    try {
+      const url = this.buildCharacterUrl(character, region, baseUrl, 'achievements');
+      const resp = await this.makeRequest(url, 'GET', true, token, this.getNamespace(character, region));
+      const data = (await resp.json()) as CharacterAchievements;
+
+      const earned = (data.achievements ?? []).filter(
+        (entry): entry is { id: number; achievement: { id: number; name: string }; completed_timestamp: number } =>
+          typeof entry.completed_timestamp === 'number',
+      );
+
+      const latest = [...earned].sort((a, b) => b.completed_timestamp - a.completed_timestamp).slice(0, 20);
+
+      const recent = await Promise.all(
+        latest.map(async (entry) => {
+          const definition = await this.fetchAchievementDefinition(region, baseUrl, token, entry.id);
+          return {
+            id: entry.id,
+            completed: entry.completed_timestamp,
+            name: entry.achievement?.name || definition.name,
+            points: definition.points,
+            description: definition.description,
+            icon: definition.icon,
+          };
+        }),
+      );
+
+      return {
+        achievements: {
+          points: data.total_points ?? 0,
+          earned_ids: earned.map((entry) => entry.id),
+          recent,
+        },
+      };
+    } catch (err) {
+      console.error(`Failed to fetch achievements for ${character.name}:`, err);
+      return { achievements: null };
+    }
+  }
+
+  private async fetchAchievementDefinition(
+    region: string,
+    baseUrl: string,
+    token: string,
+    id: number,
+  ): Promise<AchievementDefinition> {
+    const namespace = `static-${region}`;
+
+    const [detail, media] = await Promise.all([
+      this.makeRequest(this.buildGameDataUrl(region, baseUrl, `achievement/${id}`), 'GET', true, token, namespace)
+        .then((resp) => resp.json() as Promise<AchievementDetail>)
+        .catch((err) => {
+          console.error(`Failed to fetch achievement ${id}:`, err);
+          return null;
+        }),
+      this.makeRequest(this.buildGameDataUrl(region, baseUrl, `media/achievement/${id}`), 'GET', true, token, namespace)
+        .then((resp) => resp.json() as Promise<AchievementMedia>)
+        .catch(() => null),
+    ]);
+
+    return {
+      id,
+      name: detail?.name ?? '',
+      points: detail?.points ?? 0,
+      description: detail?.description ?? '',
+      icon: media?.assets?.find((asset) => asset.key === 'icon')?.value ?? '',
+    };
+  }
+
+  public async fetchAchievementTree(
+    region: string,
+    baseUrl: string,
+    token: string,
+    known: Map<number, AchievementDefinition>,
+  ): Promise<AchievementCategory[]> {
+    const namespace = `static-${region}`;
+
+    const readCategory = async (id: number): Promise<AchievementCategoryDetail | null> => {
+      try {
+        const url = this.buildGameDataUrl(region, baseUrl, `achievement-category/${id}`);
+        const resp = await this.makeRequest(url, 'GET', true, token, namespace);
+        return (await resp.json()) as AchievementCategoryDetail;
+      } catch (err) {
+        console.error(`Failed to fetch achievement category ${id}:`, err);
+        return null;
+      }
+    };
+
+    const indexUrl = this.buildGameDataUrl(region, baseUrl, 'achievement-category/index');
+    const indexResp = await this.makeRequest(indexUrl, 'GET', true, token, namespace);
+    const index = (await indexResp.json()) as AchievementCategoryIndex;
+
+    const roots = (index.root_categories ?? []).filter((category) => !/guild/i.test(category.name));
+
+    type Skeleton = {
+      category_id: number;
+      name: string;
+      display_order: number;
+      ids: number[];
+      subcategories: { id: number; name: string; ids: number[] }[];
+    };
+
+    const tree: Skeleton[] = [];
+    const wanted = new Set<number>();
+
+    for (const root of roots) {
+      const detail = await readCategory(root.id);
+      if (!detail || detail.is_guild_category) continue;
+
+      const subcategories: Skeleton['subcategories'] = [];
+      for (const sub of detail.subcategories ?? []) {
+        const subDetail = await readCategory(sub.id);
+        if (!subDetail) continue;
+        const ids = (subDetail.achievements ?? []).map((entry) => entry.id);
+        ids.forEach((id) => wanted.add(id));
+        subcategories.push({ id: sub.id, name: sub.name, ids });
+      }
+
+      const ownIds = (detail.achievements ?? []).map((entry) => entry.id);
+      ownIds.forEach((id) => wanted.add(id));
+
+      tree.push({
+        category_id: root.id,
+        name: root.name,
+        display_order: detail.display_order ?? 0,
+        ids: ownIds,
+        subcategories,
+      });
+    }
+
+    const missing = [...wanted].filter((id) => !known.has(id));
+    console.info(`Achievement tree: ${wanted.size} achievements, ${missing.length} new definitions to fetch.`);
+
+    const definitions = new Map(known);
+
+    for (const batch of chunkArray(missing, 10)) {
+      await Promise.all(
+        batch.map(async (id) => {
+          const definition = await this.fetchAchievementDefinition(region, baseUrl, token, id);
+          if (definition.name) {
+            definitions.set(id, definition);
+          }
+        }),
+      );
+      await delay(50);
+    }
+
+    const resolve = (ids: number[]) =>
+      ids.map((id) => definitions.get(id)).filter((entry): entry is AchievementDefinition => !!entry);
+
+    return tree.map(({ category_id, name, display_order, ids, subcategories }) => ({
+      category_id,
+      name,
+      display_order,
+      achievements: resolve(ids),
+      subcategories: subcategories.map((sub) => ({ id: sub.id, name: sub.name, achievements: resolve(sub.ids) })),
+    }));
   }
 
   private async fetchEncounters(

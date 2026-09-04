@@ -18,7 +18,7 @@ import { ddbProfile, DynamoCharacter } from '../types/DynamoDb';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { getTwitchExtensionSecret } from '../utils/secretsManager';
 import * as jwt from 'jsonwebtoken';
-import { JWT } from '../types/Twitch';
+import { JWT } from '../types/twitch';
 
 const ddbClient = new DynamoDBClient();
 const BattleNetApiManager = BattleNetApi.getInstance();
@@ -57,7 +57,7 @@ const processCharacter = async (
       return null;
     }
 
-    const [mediaData, items, summary, talents, raids, dungeons, keystone] = await Promise.all([
+    const [mediaData, items, summary, talents, raids, dungeons, keystone, achievements] = await Promise.all([
       BattleNetApiManager.fetchCharacterMedia(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterItems(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterSummary(apiChar, character.region, baseUrl, token),
@@ -65,6 +65,7 @@ const processCharacter = async (
       BattleNetApiManager.fetchCharacterRaids(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterDungeons(apiChar, character.region, baseUrl, token),
       BattleNetApiManager.fetchCharacterMythicKeystone(apiChar, character.region, baseUrl, token),
+      BattleNetApiManager.fetchCharacterAchievements(apiChar, character.region, baseUrl, token),
     ]);
 
     return {
@@ -77,6 +78,7 @@ const processCharacter = async (
       ...raids,
       ...dungeons,
       ...keystone,
+      ...achievements,
     };
   } catch (err) {
     console.error(`Error processing character ${character.character_id}:`, err);

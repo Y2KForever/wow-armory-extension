@@ -194,6 +194,20 @@ Resources:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
 
+  WoWExtensionAchievementsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wow-extension-achievements
+      # On-demand: category rows reach ~200KB, and a 200KB write costs 200 WCU.
+      # Against provisioned 1/1 the daily rebuild would never finish.
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: category_id
+          AttributeType: N
+      KeySchema:
+        - AttributeName: category_id
+          KeyType: HASH
+
   WoWExtensionRaidsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -337,11 +351,13 @@ Resources:
                   - dynamodb:UpdateItem
                   - dynamodb:PutItem
                   - dynamodb:Query
+                  - dynamodb:Scan
                   - dynamodb:DeleteItem
                 Resource:
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-profiles'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-talents'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-achievements'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-raids'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-raids/index/category_index'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-talents/index/class-index'
@@ -525,6 +541,7 @@ Resources:
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-raids'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-talents'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-achievements'
                   - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wow-extension-characters/index/user_id-index'
                   - !Sub 'arn:aws:s3:::wow-extension-cdn/*'
               - Effect: 'Allow'
@@ -615,6 +632,28 @@ Resources:
               Mode: 'OFF'
             RoleArn: !GetAtt UpdatesCharactersScheduleRole.Arn
 
+  UpdateAchievementsSchedule:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/UpdateAchievements/index.handler
+      # Daily, before the character update at 00:15 so a character earning a
+      # brand new achievement always has a definition to resolve it against.
+      Description: Rebuilds the achievement category tree daily, fetching only newly added achievements.
+      Timeout: 900
+      Role: !GetAtt UpdateCharactersLambdaRole.Arn
+      Events:
+        AchievementUpdateSchedule:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: 'cron(45 23 * * ? *)'
+            ScheduleExpressionTimezone: Europe/London
+            RetryPolicy:
+              MaximumRetryAttempts: 0
+            FlexibleTimeWindow:
+              Mode: 'OFF'
+            RoleArn: !GetAtt UpdatesCharactersScheduleRole.Arn
+
   CheckValidUserSchedule:
     Type: AWS::Serverless::Function
     Metadata: *esbuild
@@ -647,6 +686,22 @@ Resources:
           Type: Api
           Properties:
             Path: /talents
+            Method: GET
+            RestApiId:
+              Ref: API
+
+  GetAchievementsFunction:
+    Type: AWS::Serverless::Function
+    Metadata: *esbuild
+    Properties:
+      Handler: src/GetAchievements/index.handler
+      Description: Returns the achievement category tree, or one category in full
+      Role: !GetAtt LambdaBasicRole.Arn
+      Events:
+        GetAchievements:
+          Type: Api
+          Properties:
+            Path: /achievements
             Method: GET
             RestApiId:
               Ref: API

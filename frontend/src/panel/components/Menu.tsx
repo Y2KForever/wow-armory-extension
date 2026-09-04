@@ -19,6 +19,7 @@ import { Skull } from '@/assets/icons/Skull';
 import { Hourglass } from '@/assets/icons/Hourglass';
 import { Helmet } from '@/assets/icons/Helmet';
 import { Star } from '@/assets/icons/Star';
+import { Trophy } from '@/assets/icons/Trophy';
 
 interface IMenuHeaderProps {
   setView: React.Dispatch<React.SetStateAction<Views>>;
@@ -89,6 +90,7 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
     { key: Views.TALENTS, Icon: Star, blocked: isTalentsLoading },
     { key: Views.RAIDS, Icon: Skull, blocked: isRaidsLoading },
     { key: Views.MPLUS, Icon: Hourglass, blocked: false },
+    { key: Views.ACHIEVEMENTS, Icon: Trophy, blocked: false },
     // { key: Views.PVP, Icon: Swords, blocked: isRaidsLoading },
   ];
 
@@ -112,7 +114,7 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
                   setView(key);
                 }
               }}
-              className="flex items-center justify-center w-[34px] h-[32px] hover:cursor-pointer"
+              className="flex items-center justify-center w-[32px] h-[32px] hover:cursor-pointer"
               style={{
                 background: active ? ACTIVE_PLATE : 'transparent',
                 boxShadow: active ? ACTIVE_INNER : 'none',
