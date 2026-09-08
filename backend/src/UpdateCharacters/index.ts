@@ -1,8 +1,6 @@
-import { simplifyDynamoDBResponse } from '../utils/utils';
+import { chunkArray, simplifyDynamoDBResponse } from '../utils/utils';
 import { ApiCharacter } from '../types/Api';
 import {
-  DeleteItemCommand,
-  DeleteItemCommandInput,
   DynamoDBClient,
   QueryCommand,
   QueryCommandInput,
@@ -44,15 +42,9 @@ const processCharacter = async (
   try {
     const isValid = await BattleNetApiManager.fetchCharacterStatus(apiChar, character.region, baseUrl, token);
 
-    if (!isValid) {
-      const deleteParams: DeleteItemCommandInput = {
-        TableName: 'wow-extension-characters',
-        Key: {
-          character_id: { N: character.character_id.toString() },
-        },
-      };
-      await ddbClient.send(new DeleteItemCommand(deleteParams));
-      return null;
+    if (!isValid.is_valid) {
+      console.info(`Character ${character.name} (${character.character_id}) is no longer valid, skipping refresh.`);
+      return { ...character, is_valid: false };
     }
 
     const [mediaData, items, summary, talents, raids, dungeons, keystone, achievements] = await Promise.all([
@@ -66,10 +58,21 @@ const processCharacter = async (
       BattleNetApiManager.fetchCharacterAchievements(apiChar, character.region, baseUrl, token),
     ]);
 
-    return { ...character, ...mediaData, ...items, ...summary, is_valid: isValid.is_valid, ...talents, ...raids, ...dungeons, ...keystone, ...achievements };
+    return {
+      ...character,
+      ...mediaData,
+      ...items,
+      ...summary,
+      is_valid: isValid.is_valid,
+      ...talents,
+      ...raids,
+      ...dungeons,
+      ...keystone,
+      ...achievements,
+    };
   } catch (err) {
     console.error(`Error processing character ${character.character_id}:`, err);
-    throw err;
+    return null;
   }
 };
 
@@ -186,15 +189,21 @@ const lambdaHandler = async (): Promise<void> => {
     return;
   }
 
-  const params: TransactWriteItemsInput = {
-    TransactItems: allTransactItems,
-  };
+  let written = 0;
+  for (const batch of chunkArray(allTransactItems, 25)) {
+    const params: TransactWriteItemsInput = { TransactItems: batch };
+    try {
+      await ddbClient.send(new TransactWriteItemsCommand(params));
+      written += batch.length;
+    } catch (err) {
+      console.error('Error writing transaction batch:', err);
+    }
+  }
 
-  try {
-    await ddbClient.send(new TransactWriteItemsCommand(params));
-  } catch (err) {
-    console.error('Error writing transaction:', err);
-    throw err;
+  console.info(`Updated ${validCharacters.length} characters, wrote ${written} of ${allTransactItems.length} items.`);
+
+  if (written === 0) {
+    throw new Error('Failed to write any character updates.');
   }
 };
 

@@ -287,8 +287,8 @@ class BattleNetApi {
       );
       return mediaMap;
     } catch (err) {
-      console.error(`Failed to fetch character media:`, err);
-      throw err;
+      console.error(`Failed to fetch character media for ${character.name}:`, err);
+      return {};
     }
   }
 

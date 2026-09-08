@@ -1,8 +1,6 @@
 import { ApiResult, controlHeaders, getBlizzardAppToken, simplifyDynamoDBResponse, verifyJwt } from '../utils/utils';
 import { ApiCharacter } from '../types/Api';
 import {
-  DeleteItemCommand,
-  DeleteItemCommandInput,
   DynamoDBClient,
   GetItemCommand,
   GetItemCommandInput,
@@ -46,15 +44,9 @@ const processCharacter = async (
   try {
     const isValid = await BattleNetApiManager.fetchCharacterStatus(apiChar, character.region, baseUrl, token);
 
-    if (!isValid) {
-      const deleteParams: DeleteItemCommandInput = {
-        TableName: 'wow-extension-characters',
-        Key: {
-          character_id: { N: character.character_id.toString() },
-        },
-      };
-      await ddbClient.send(new DeleteItemCommand(deleteParams));
-      return null;
+    if (!isValid.is_valid) {
+      console.info(`Character ${character.name} (${character.character_id}) is no longer valid, skipping refresh.`);
+      return { ...character, is_valid: false };
     }
 
     const [mediaData, items, summary, talents, raids, dungeons, keystone, achievements] = await Promise.all([
