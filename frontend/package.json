@@ -8,7 +8,7 @@
     "dev:token": "node ./scripts/dev-token.mjs",
     "build": "tsc -b && vite build",
     "release": "yarn build && ./scripts/zip.sh && yarn sync && yarn invalidate",
-    "sync": "aws s3 sync ./dist s3://wow-extension-landing-page --exclude \"*\" --include \"landing.html\" --include \"assets/landing-*\" --include \"assets/main-*\"",
+    "sync": "aws s3 sync ./dist s3://wow-extension-landing-page --exclude \"*\" --include \"landing.html\" --include \"assets/landing-*\" --include \"assets/index-*\" --include \"assets/main-*\" --include \"assets/*.woff2\" --include \"assets/*.woff\" --include \"assets/*.ttf\" --include \"assets/*.jpg\"",
     "invalidate": "aws cloudfront create-invalidation --distribution-id ECKCFNPG4IIL --paths \"/*\"",
     "lint": "eslint .",
     "preview": "vite preview"
