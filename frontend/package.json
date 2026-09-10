@@ -48,7 +48,7 @@
     "react-virtualized": "^9.22.6",
     "react-virtualized-auto-sizer": "^1.0.26",
     "react-window": "^1.8.11",
-    "simplebar-react": "^3.3.0",
+    "simplebar-react": "^3.3.2",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
