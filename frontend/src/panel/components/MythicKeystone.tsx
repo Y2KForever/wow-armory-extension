@@ -89,7 +89,11 @@ export const MythicKeystone = ({ character }: IMythicKeystoneProps) => {
             label: 'BEST KEY',
             className: 'text-blizzard-yellow',
           },
-          { value: `${summary.timed}/${summary.totalRuns}`, label: 'TIMED', className: 'text-[#d8d3c6]' },
+          {
+            value: summary.avgKey ? `+${Math.round(summary.avgKey)}` : '—',
+            label: 'AVG KEY',
+            className: 'text-[#d8d3c6]',
+          },
         ].map((stat, index) => (
           <div
             key={stat.label}
