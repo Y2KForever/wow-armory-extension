@@ -21,8 +21,8 @@ export interface DungeonRow {
 export interface KeystoneSummary {
   rating: number;
   bestKey: number;
-  timed: number;
-  totalRuns: number;
+  avgKey: number;
+  dungeons: number;
   rows: DungeonRow[];
 }
 
@@ -81,8 +81,8 @@ export const summariseKeystone = (keystone: ApiCharacter['mythic_keystone']): Ke
   return {
     rating: keystone.rating,
     bestKey: Math.max(0, ...keystone.runs.map((run) => run.level)),
-    timed: keystone.runs.filter((run) => run.timed).length,
-    totalRuns: keystone.runs.length,
+    avgKey: rows.length ? rows.reduce((sum, row) => sum + (row.best?.level ?? 0), 0) / rows.length : 0,
+    dungeons: rows.length,
     rows,
   };
 };

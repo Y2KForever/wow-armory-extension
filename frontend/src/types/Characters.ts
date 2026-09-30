@@ -132,6 +132,23 @@ type ApiCharacter = {
       hero_talents: { id: number; rank: number }[];
     }[];
   };
+  pvp?: {
+    season_id: number | null;
+    season_name: string | null;
+    honor_level: number;
+    honorable_kills: number;
+    brackets: {
+      kind: '2v2' | '3v3' | 'rbg' | 'shuffle' | 'blitz';
+      spec: string | null;
+      rating: number;
+      tier: string | null;
+      played: number;
+      won: number;
+      lost: number;
+      weekly_won: number;
+      weekly_lost: number;
+    }[];
+  } | null;
   achievements?: {
     points: number;
     earned_ids: number[];

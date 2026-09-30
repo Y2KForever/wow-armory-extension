@@ -480,3 +480,35 @@ export type AchievementDetail = {
 export type AchievementMedia = {
   assets?: { key: string; value: string }[];
 };
+
+export type PvpSummary = {
+  honor_level?: number;
+  honorable_kills?: number;
+  brackets?: { href: string }[];
+};
+
+export type PvpMatchStatistics = {
+  played: number;
+  won: number;
+  lost: number;
+};
+
+export type PvpBracket = {
+  rating?: number;
+  season?: { id: number };
+  tier?: { id: number; key?: { href: string } };
+  specialization?: { id: number; name: string };
+  season_match_statistics?: PvpMatchStatistics;
+  weekly_match_statistics?: PvpMatchStatistics;
+};
+
+export type PvpTier = {
+  id: number;
+  name: string;
+  min_rating?: number;
+};
+
+export type PvpSeason = {
+  id: number;
+  season_name?: string;
+};

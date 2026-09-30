@@ -11,7 +11,9 @@ import {
   ApiInstance,
   ApiItems,
   ApiMythicKeystone,
+  ApiPvp,
   ApiRaids,
+  PvpBracketKind,
 } from '../types/Api';
 import {
   AchievementCategoryDetail,
@@ -30,6 +32,10 @@ import {
   MythicKeystoneDungeon,
   MythicKeystoneProfile,
   MythicKeystoneSeason,
+  PvpBracket,
+  PvpSeason,
+  PvpSummary,
+  PvpTier,
   Raids,
   Slots,
   Talents,
@@ -874,6 +880,137 @@ class BattleNetApi {
     } catch (err) {
       console.error(`Failed to fetch ${kind} encounters for ${character.name}:`, err);
       return [];
+    }
+  }
+
+  private pvpTiers = new Map<number, string>();
+  private pvpSeasons = new Map<number, string | null>();
+
+  private bracketKind(slug: string): PvpBracketKind | null {
+    if (slug === '2v2' || slug === '3v3' || slug === 'rbg') return slug;
+    if (slug.startsWith('shuffle-')) return 'shuffle';
+    if (slug.startsWith('blitz-')) return 'blitz';
+    return null;
+  }
+
+  private async fetchPvpTierName(region: string, baseUrl: string, token: string, id: number) {
+    if (this.pvpTiers.has(id)) return this.pvpTiers.get(id)!;
+    try {
+      const resp = await this.makeRequest(
+        this.buildGameDataUrl(region, baseUrl, `pvp-tier/${id}`),
+        'GET',
+        true,
+        token,
+        `static-${region}`,
+      );
+      const tier = (await resp.json()) as PvpTier;
+      this.pvpTiers.set(id, tier.name);
+      return tier.name;
+    } catch {
+      return null;
+    }
+  }
+
+  private async fetchPvpSeasonName(region: string, baseUrl: string, token: string, id: number) {
+    if (this.pvpSeasons.has(id)) return this.pvpSeasons.get(id)!;
+    try {
+      const resp = await this.makeRequest(
+        this.buildGameDataUrl(region, baseUrl, `pvp-season/${id}`),
+        'GET',
+        true,
+        token,
+        `dynamic-${region}`,
+      );
+      const season = (await resp.json()) as PvpSeason;
+      const name = season.season_name ?? null;
+      this.pvpSeasons.set(id, name);
+      return name;
+    } catch {
+      return null;
+    }
+  }
+
+  public async fetchCharacterPvp(
+    character: ApiCharacter,
+    region: string,
+    baseUrl: string,
+    token: string,
+  ): Promise<ApiPvp> {
+    try {
+      const namespace = this.getNamespace(character, region);
+      const summaryResp = await this.makeRequest(
+        this.buildCharacterUrl(character, region, baseUrl, 'pvp-summary'),
+        'GET',
+        true,
+        token,
+        namespace,
+      );
+      const summary = (await summaryResp.json()) as PvpSummary;
+
+      const slugs = (summary.brackets ?? [])
+        .map((bracket) => bracket.href.split('?')[0].split('/').pop() ?? '')
+        .filter((slug) => this.bracketKind(slug) !== null);
+
+      const fetched = await Promise.all(
+        slugs.map(async (slug) => {
+          try {
+            const resp = await this.makeRequest(
+              this.buildCharacterUrl(character, region, baseUrl, `pvp-bracket/${slug}`),
+              'GET',
+              true,
+              token,
+              namespace,
+            );
+            const data = (await resp.json()) as PvpBracket;
+            const kind = this.bracketKind(slug)!;
+            const season = data.season_match_statistics;
+            const weekly = data.weekly_match_statistics;
+            return {
+              seasonId: data.season?.id ?? null,
+              bracket: {
+                kind,
+                spec: kind === 'shuffle' || kind === 'blitz' ? (data.specialization?.name ?? null) : null,
+                rating: data.rating ?? 0,
+                tier: data.tier?.id ? await this.fetchPvpTierName(region, baseUrl, token, data.tier.id) : null,
+                played: season?.played ?? 0,
+                won: season?.won ?? 0,
+                lost: season?.lost ?? 0,
+                weekly_won: weekly?.won ?? 0,
+                weekly_lost: weekly?.lost ?? 0,
+              },
+            };
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      const best = new Map<PvpBracketKind, NonNullable<ApiPvp['pvp']>['brackets'][number]>();
+      for (const entry of fetched) {
+        if (!entry) continue;
+        const current = best.get(entry.bracket.kind);
+        if (!current || entry.bracket.rating > current.rating) {
+          best.set(entry.bracket.kind, entry.bracket);
+        }
+      }
+
+      const seasonId = fetched.reduce<number | null>(
+        (top, entry) => (entry?.seasonId && (top === null || entry.seasonId > top) ? entry.seasonId : top),
+        null,
+      );
+
+      return {
+        pvp: {
+          season_id: seasonId,
+          season_name: seasonId ? await this.fetchPvpSeasonName(region, baseUrl, token, seasonId) : null,
+          honor_level: summary.honor_level ?? 0,
+          honorable_kills: summary.honorable_kills ?? 0,
+          brackets: [...best.values()],
+        },
+      };
+    } catch (err) {
+      console.error(`Failed to fetch pvp for ${character.name}:`, err);
+      return { pvp: null };
     }
   }
 
