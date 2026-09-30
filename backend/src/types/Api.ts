@@ -174,6 +174,28 @@ export type ApiMythicKeystone = {
   } | null;
 };
 
+export type PvpBracketKind = '2v2' | '3v3' | 'rbg' | 'shuffle' | 'blitz';
+
+export type ApiPvp = {
+  pvp: {
+    season_id: number | null;
+    season_name: string | null;
+    honor_level: number;
+    honorable_kills: number;
+    brackets: {
+      kind: PvpBracketKind;
+      spec: string | null;
+      rating: number;
+      tier: string | null;
+      played: number;
+      won: number;
+      lost: number;
+      weekly_won: number;
+      weekly_lost: number;
+    }[];
+  } | null;
+};
+
 export type ApiDungeons = {
   dungeons: ApiRaids['raids'];
 };

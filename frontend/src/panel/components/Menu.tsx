@@ -12,10 +12,7 @@ import { useFetchInstancesQuery, useFetchTalentsQuery } from '@/store/api/charac
 import { ApiCharacter, InstanceType } from '@/types/Characters';
 import { toUnderscores } from '@/lib/utils';
 import { Skull } from '@/assets/icons/Skull';
-// Re-enable with the PvP tab below.
-// import { Swords } from '@/assets/icons/Swords';
-// Re-enable with the Dungeon tab below.
-// import { Dungeon } from '@/assets/icons/Dungeon';
+import { Swords } from '@/assets/icons/Swords';
 import { Hourglass } from '@/assets/icons/Hourglass';
 import { Helmet } from '@/assets/icons/Helmet';
 import { Star } from '@/assets/icons/Star';
@@ -90,8 +87,8 @@ export const MenuHeader = ({ setView, view, selectedCharacter }: IMenuHeaderProp
     { key: Views.TALENTS, Icon: Star, blocked: isTalentsLoading },
     { key: Views.RAIDS, Icon: Skull, blocked: isRaidsLoading },
     { key: Views.MPLUS, Icon: Hourglass, blocked: false },
+    { key: Views.PVP, Icon: Swords, blocked: false },
     { key: Views.ACHIEVEMENTS, Icon: Trophy, blocked: false },
-    // { key: Views.PVP, Icon: Swords, blocked: isRaidsLoading },
   ];
 
   return (
