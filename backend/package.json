@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.10",
-    "@types/aws-lambda": "^8.10.163",
+    "@types/aws-lambda": "^8.10.164",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.20.4",
     "aws-lambda": "^1.0.7",
